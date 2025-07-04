@@ -1,0 +1,47 @@
+public enum Token{
+        /*METACHARACTERS*/
+        PLUS,
+        STAR,
+        ALTERNATION,
+        PERIOD,
+        QUESTION_MARK,
+        CARET,
+        DOLLAR_SIGN,
+        BACKSLASH,
+        LEFT_PAREN,
+        RIGHT_PAREN,
+        LEFT_BRACKET,
+        RIGHT_BRACKET,
+        LEFT_BRACES,
+        RIGHT_BRACES,
+        COLON,
+        MINUS,
+
+        /*ESCAPE SEQUENCES*/        
+        WORD,
+        NON_WORD,
+        DIGITS,
+        NON_DIGITS,
+        WHITESPACE,
+        NON_WHITESPACE,
+        BACKREFERENCES,
+        CHAR_CARET,
+        CHAR_PERIOD,
+        CHAR_DOLLAR_SIGN,
+        CHAR_ALTERNATION,
+        CHAR_LEFT_PAREN,
+        CHAR_RIGHT_PAREN,
+        CHAR_LEFT_BRACKET, 
+        CHAR_RIGHT_BRACKET,
+        CHAR_LEFT_BRACES,
+        CHAR_RIGHT_BRACES,
+        CHAR_MINUS,
+        CHAR_STAR,
+        CHAR_PLUS,
+        CHAR_QUESTION_MARK,
+
+        /*Other tokens*/
+        EOF,
+        ERROR,
+        CHARACTER
+}
