@@ -305,8 +305,11 @@ public class Scanner{
         private boolean validPosixName(String name)
         {
                 String [] posixNames = {"upper", "lower", "alpha", "alnum", 
-                                        "digit","xdigit", "punct","blank",
-                                        "space","cntrl","graph", "print"};
+                                        "digit", "xdigit", "punct","blank",
+                                        "space", "cntrl","graph", "print", 
+                                        "^upper", "^lower",  "^alpha", "^alnum", 
+                                        "^digit", "^xdigit", "^punct", "^blank",
+                                        "^space", "^cntrl",  "^graph", "^print", };
                 boolean valid = false;
                 for (String posix : posixNames) {
                         valid = name.equalsIgnoreCase(posix);
@@ -324,6 +327,17 @@ public class Scanner{
                                 throw new Exception("Erroneous escape sequence.");
                         else return true; 
                 return false;
+        }
+
+        public Token peek()
+        {
+                Token token = null;
+                int peek = loc;
+                try{
+                        token = nextToken(); 
+                        loc = peek;
+                }catch(Exception e){System.out.println(e.getMessage());} 
+                return token;
         }
 
         public CharacterClass getCharacterClass(){return characterClass;}
