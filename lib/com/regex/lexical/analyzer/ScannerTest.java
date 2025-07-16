@@ -6,7 +6,7 @@ public class ScannerTest {
         @Test
         public void testOperators()
         {
-                String operators = "^.$|()*+?";
+                String operators = "^.$|()*+?:";
                 TokenType  [] types = { TokenType.CARET, 
                                         TokenType.PERIOD,
                                         TokenType.DOLLAR_SIGN,
@@ -16,6 +16,7 @@ public class ScannerTest {
                                         TokenType.STAR,
                                         TokenType.PLUS,
                                         TokenType.QUESTION_MARK,
+                                        TokenType.COLON,
                                         TokenType.EOF};
                 Scanner scanner = new Scanner(operators);
                 for(TokenType type : types){
@@ -31,7 +32,7 @@ public class ScannerTest {
         {
                 String alpha    = "abcdefghijklmnopqrstuvwxyz";
                 String digits   = "0123456789";
-                String symbols  = "`~@#%:;'\"/<>/=_-&]";
+                String symbols  = "`~@#%;'\"/<>/=_-&]";
                 String escaped  = "\\^\\.\\$\\|\\(\\)\\[\\{\\*\\+\\?";
                 String pattern = alpha + digits + symbols + escaped; 
                 Scanner scanner = new Scanner(pattern); 
@@ -118,23 +119,29 @@ public class ScannerTest {
         }
 
         @Test
+        public void testExactRepetition()
+        {
+                String pattern  = "{1}";
+                double range = 1; 
+                
+                Scanner scanner = new Scanner(pattern); 
+                try{
+                        assertEquals(scanner.nextToken().getTokenType(), TokenType.REPETITION);
+                        assertEquals(range, scanner.getRepetition().getMin(), 0.0);
+                        assertEquals(range, scanner.getRepetition().getMax(), 0.0);
+                }catch(Exception e){System.out.println(e.getMessage());}
+        }
+
+        @Test
         public void testInvalidRepetition()
         {
                 String [] pattern = {"{}","{a}", "{a}","{1","{1,3", "{1,a}"};
-                String [] message = {   "Empty quantifier.", 
-                                        "Invalid token.",
-                                        "Invalid token.", 
-                                        "Missing }.",
-                                        "Missing }.",
-                                        "Invalid token."};
                 Scanner scanner = null; 
                 for(int i = 0; i < pattern.length; ++i){
                         scanner = new Scanner(pattern[i]);
                         try{
                                 scanner.nextToken();
-                        }catch(Exception e)
-                        {
-                                assertEquals(message[i], e.getMessage());
+                        }catch(InvalidTokenException e){
                                 System.out.println(e.getMessage());
                         }
                 }
@@ -182,7 +189,7 @@ public class ScannerTest {
                         assertEquals(scanner.getCharacterClass().getRanges().get(i).getHigh(), range[i][1]);
                         assertEquals(mem, scanner.getCharacterClass().stringRepSet());
                      }
-                }catch(Exception e){System.out.println(e.getMessage());}
+                }catch(InvalidTokenException e){System.out.println(e.getMessage());}
         }
 
         @Test
@@ -197,9 +204,9 @@ public class ScannerTest {
                         assertEquals(token.getTokenType(), TokenType.CHARACTER_CLASS);
                         assertEquals(mem, scanner.getCharacterClass().stringRepSet());
                         assertEquals(scanner.getCharacterClass().getPosix().get(0), "alpha");
-                        for(int i = 0; i < pattern.length();++i)
+                        for(int i = 0; i < escape.length();++i)
                                 assertEquals((int)scanner.getCharacterClass().getEscape().get(i), escape.charAt(i));      
-                } catch (Exception e){System.out.println(e.getMessage());}
+                } catch (InvalidTokenException e){System.out.println(e.getMessage());}
         }
 
 
@@ -220,7 +227,7 @@ public class ScannerTest {
                         assertEquals(scanner.getCharacterClass().getPosix().get(i), posix[i]);
                         assertEquals(mem, scanner.getCharacterClass().stringRepSet());
                      }
-                }catch(Exception e){System.out.println(e.getMessage());}
+                }catch(InvalidTokenException e){System.out.println(e.getMessage());}
         }
 
         
@@ -243,7 +250,56 @@ public class ScannerTest {
                         scanner = new Scanner(invalid[i]);
                         try{
                                 scanner.nextToken();
+                        }catch(InvalidTokenException e){System.out.println(e.getMessage());}
+                }
+        }
+
+        @Test 
+        public void testRegex()
+        {
+                String pattern = "^abc[a-z[:digit:]defg\\d]{1,2}(a){5}b*?a+$\\1@";
+                TokenType [] types = {
+                        TokenType.CARET, TokenType.CHARACTER, TokenType.CHARACTER,
+                        TokenType.CHARACTER, TokenType.CHARACTER_CLASS, 
+                        TokenType.REPETITION, TokenType.LEFT_PAREN, TokenType.CHARACTER,
+                        TokenType.RIGHT_PAREN, TokenType.REPETITION, TokenType.CHARACTER,
+                        TokenType.STAR, TokenType.QUESTION_MARK, TokenType.CHARACTER,
+                        TokenType.PLUS, TokenType.DOLLAR_SIGN, TokenType.BACK_REFERENCE,
+                        TokenType.CHARACTER, TokenType.EOF
+                };
+                
+                /*Elements of the character class*/
+                String mem = "defg";
+                String posix = "digit";
+                int [] range = {'a', 'z'};
+                double [] minmax = {1, 2, 5, 5};
+                int i = 0; 
+                Scanner scanner = new Scanner(pattern);
+                Token token = null; 
+                for (TokenType type : types) {
+                        try{
+                                token = scanner.nextToken();
+                                assertEquals(type, token.getTokenType());
+                                if(type == TokenType.REPETITION){
+                                        assertEquals(minmax[i], scanner.getRepetition().getMin(), 0.0);
+                                        assertEquals(minmax[i+1], scanner.getRepetition().getMax(), 0.0);
+                                        i+=2;
+                                }
+                                if(type == TokenType.CHARACTER_CLASS){
+                                        for(int j = 0; j < scanner.getCharacterClass().getRanges().size();++j){
+                                                assertEquals(scanner.getCharacterClass().getRanges().get(j).getLow(), range[0]);
+                                                assertEquals(scanner.getCharacterClass().getRanges().get(j).getHigh(),  range[1]);
+                                        }
+                                        for(String s: scanner.getCharacterClass().getPosix()){
+                                                assertEquals(s, posix);
+                                        }
+                                        for(Integer escape : scanner.getCharacterClass().getEscape()){
+                                                assertEquals('d', escape.intValue());
+                                        }
+                                        assertEquals(mem, scanner.getCharacterClass().stringRepSet());
+                                }
                         }catch(Exception e){System.out.println(e.getMessage());}
                 }
         }
+        
 }

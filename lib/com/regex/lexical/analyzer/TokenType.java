@@ -6,9 +6,11 @@ public enum TokenType {
         PERIOD,
         QUESTION_MARK,
         CARET,
+        COLON,
         DOLLAR_SIGN,
         LEFT_PAREN,
         RIGHT_PAREN,
+
 
         /*ESCAPE SEQUENCE*/
         DIGITS,

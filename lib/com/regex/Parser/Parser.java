@@ -1,151 +1,235 @@
 public class Parser {
         private Scanner scanner;
         private Token   token;
+        private String  pattern = "";
+        int groups = 0;
 
         public Parser(String pattern)
         {
                 scanner = new Scanner(pattern);
         }
-        
-        public void compile() throws Exception
+
+        public void compile() throws InvalidTokenException
         {
-                try{
-                        token = scanner.peek();
-                        if(token.getTokenType() == TokenType.CARET)
-                                System.out.println(token.getTokenType());
-                        
-                        token = scanner.nextToken(); 
-                        if(token.getTokenType() == TokenType.DOLLAR_SIGN){
-                                System.out.println(token.getTokenType());
-                                token = scanner.nextToken();
-                        }
-
-                        if(token.getTokenType() != TokenType.EOF)
-                                throw new Exception("Invalid token.");
-                }catch(Exception e){
-                        System.out.println(e.getMessage());
-                }
-        }      
-
-
-        public void regex()
-        {
-               union(); 
-        }
-
-        public void union()
-        {
-                concatenation();
-                unionTail();
-        }
-
-        public void unionTail()
-        {
-                token = scanner.peek();
-                if(token.getTokenType() == TokenType.ALTERNATION){
-                        try{
-                                System.out.println(token.getTokenType());
-                                token = scanner.nextToken();
-                                union();
-                        }catch(Exception e){System.out.println(e.getMessage());}
+                regex();
+                token = scanner.nextToken(); 
+                if(token.getTokenType() != TokenType.EOF){
+                        throw new InvalidTokenException("Invalid token: " + Character.toString(token.getValue()));
                 }    
         }
 
-        public void concatenation()
+        private void regex() throws InvalidTokenException
         {
-                basicRegex();
-                concatenationTail();
-        }
+                token = scanner.peek();
+                if(token.getTokenType() == TokenType.CARET){
+                        pattern+= Character.toString(token.getValue());
+                        token = scanner.nextToken();
+                }
 
-        public void concatenationTail()
-        {
-                try{
-                        token = scanner.peek();
-                        if(token.getTokenType() == TokenType.CHARACTER){
-                                concatenation();
-                        }
-                }catch(Exception e){System.out.println(e.getMessage());}
-               
-
-        }
-
-        public void basicRegex()
-        {
-                try{
-                        atom();
-                        quantifiers();
-                }catch(Exception e){System.out.println(e.getMessage());}
-        }
-
-        public void atom() throws Exception
-        {
-                token = scanner.nextToken();
-                switch(token.getTokenType()){
-                        case CHARACTER:
-                        case PERIOD:
-                        case DIGITS:
-                        case NON_DIGITS:
-                        case WORD:
-                        case NON_WORD:
-                        case WHITESPACE:
-                        case NON_WHITESPACE:
-                                /*Do functionality */
-                                System.out.println("Atom: " + token.getTokenType());
-                        break;
-                        case BACK_REFERENCE: 
-                                /*do functionality*/
-                                System.out.println("Atom: " + token.getTokenType());
-                        case CHARACTER_CLASS:
-                                /*Do functionality*/
-                                System.out.println("Atom: " + token.getTokenType());
-                        break;
-
-                        case LEFT_PAREN:
-                                group();
-                        default:
-                                throw new Exception("Invalid token.");
-                        
+                union();
+                token = scanner.peek();
+                if(token.getTokenType() == TokenType.DOLLAR_SIGN){
+                        pattern+= Character.toString(token.getValue());
+                        token = scanner.nextToken();
                 }
         }
 
-        public void quantifiers()
+        private void union() throws InvalidTokenException
         {
-                try{
+                concatenation();
+                token = scanner.peek();
+                if(token.getTokenType() == TokenType.DOLLAR_SIGN){
+                        pattern+= Character.toString(token.getValue());
+                        token = scanner.nextToken();  
+                }
+
+                token = scanner.peek();
+                if(token.getTokenType() == TokenType.ALTERNATION){
+                        pattern+=Character.toString(token.getValue());
                         token = scanner.nextToken();
+                        regex();
+                }
+        }
+
+        private void concatenation() throws InvalidTokenException
+        {
+                basicRegex();
+                token = scanner.peek();
+                switch(token.getTokenType()){
+                        case DIGITS:
+                        case NON_DIGITS:
+                        case WHITESPACE:
+                        case NON_WHITESPACE:
+                        case WORD:
+                        case NON_WORD:
+                        case CHARACTER:
+                        case COLON:
+                        case PERIOD:
+                        case LEFT_PAREN:
+                        case CHARACTER_CLASS:
+                        case BACK_REFERENCE:
+                                concatenation();
+                        break;
+                        default:
+                }
+        }
+
+        private void basicRegex() throws InvalidTokenException
+        {
+                atom();
+                quantifiers();
+        }
+        
+        private void atom() throws InvalidTokenException
+        {
+                token = scanner.nextToken();
+                switch(token.getTokenType()){
+                        case DIGITS:
+                        case NON_DIGITS:
+                        case WHITESPACE:
+                        case NON_WHITESPACE:
+                        case WORD:
+                        case NON_WORD:
+                                pattern+="\\";
+                                pattern+=Character.toString(token.getValue());
+                        break;
+                        case BACK_REFERENCE:
+                                if(token.getValue() > groups)
+                                        throw new InvalidTokenException("Invalid token: invalid back reference.");
+                                pattern+="\\";
+                                pattern+=Character.toString(token.getValue());
+                        break;
+                        case CHARACTER:
+                        case COLON:
+                                pattern+=printMetaCharacter();
+                        break;
+                        case PERIOD:
+                                pattern+=Character.toString(token.getValue());
+                        break;
+                        case LEFT_PAREN:
+                                pattern+=Character.toString(token.getValue());
+                                group();
+                        break;
+                        case CHARACTER_CLASS:
+                                CharacterClass c = scanner.getCharacterClass();
+                                pattern+=c.getRepresentation();
+                        break;
+                        default:
+                                throw new InvalidTokenException("Invalid token: "+ Character.toString(token.getValue()));
+                }
+        }
+
+        private void quantifiers()
+        {
+                try {
+                        token = scanner.peek();
                         switch(token.getTokenType()){
-                                case QUESTION_MARK:
-                                        /*do functionality*/
-                                        System.out.println("Quantifier: " + token.getTokenType());
-                                break; 
                                 case STAR:
-                                        /*do functionality*/
-                                        System.out.println("Quantifier: " + token.getTokenType());
-                                break; 
+                                case QUESTION_MARK:
                                 case PLUS:
-                                        /*do functionality*/
-                                        System.out.println("Quantifier: " + token.getTokenType());
+                                        pattern+=Character.toString(token.getValue());
+                                        token = scanner.nextToken();
                                 break;
                                 case REPETITION:
-                                        /*do functionality*/
-                                        System.out.println("Quantifier: " + token.getTokenType());
+                                        Repetition repetition = scanner.getRepetition();
+                                        pattern+=repetition;
+                                        token = scanner.nextToken();
                                 break;
                                 default:
-
-                        }
-                }catch(Exception e){System.out.println(e.getMessage());}
+                                break;
+                        }       
+                }catch(Exception e){
+                    System.err.println(e.getMessage());
+                }
         }
 
-
-        public void group()
+        private void group() throws InvalidTokenException
         {
-                /*Parse optional flags*/
-                System.out.println("Group");
-                regex();
-                try{
+                boolean exit = true;
+                String flags = "";
+                ++groups;
+                /*TO DO
+                 * Take care of nonmatch sub group and flags
+                 */
+                token = scanner.peek();
+                if(token.getTokenType() == TokenType.QUESTION_MARK){
+                        pattern+=Character.toString(token.getValue());
+                        token = scanner.nextToken();
+                        token = scanner.peek();
+                        if(token.getTokenType() == TokenType.CHARACTER){
+                                /*Get flags*/
+                                while(exit){
+                                        token = scanner.nextToken();
+                                        switch(token.getValue()){
+                                                case 'i':
+                                                case 'm':
+                                                case 's':
+                                                case 'U':
+                                                        flags+=Character.toString(token.getValue());
+                                                break;
+                                                default:
+                                                        exit = false;
+                                        }
+                                }
+                                if("imsU".indexOf(token.getValue()) == -1
+                                && token.getTokenType() != TokenType.COLON 
+                                && token.getTokenType() != TokenType.RIGHT_PAREN)
+                                        throw new InvalidTokenException("Invalid token: unknow flag.");
+                                pattern+= flags;
+
+                                if(token.getTokenType() == TokenType.COLON){
+                                        /*Turn off non capturing*/
+                                        pattern+=Character.toString(token.getValue());
+                                        regex();
+                                        token = scanner.nextToken();
+                                        if(token.getTokenType() != TokenType.RIGHT_PAREN)
+                                                throw new InvalidTokenException("Invalid token: missing ).");
+                                                /*take care of group */
+                                                pattern+=Character.toString(token.getValue());
+
+                                }else if(token.getTokenType() == TokenType.RIGHT_PAREN){
+                                        /*take care of group */
+                                        pattern+=Character.toString(token.getValue());
+                                }else 
+                                        throw new InvalidTokenException("Invalid token: unknow flag.");
+                        }else if(token.getTokenType() == TokenType.COLON){
+                                pattern+=Character.toString(token.getValue());
+                                token = scanner.nextToken();
+                                regex();
+                                if(token.getTokenType() != TokenType.RIGHT_PAREN)
+                                        throw new InvalidTokenException("Invalid token: missing ).");
+                                /*take care of group */
+                                pattern+=Character.toString(token.getValue());
+                        }else throw new InvalidTokenException("Invalid token: unknow flag.");
+                }else{
+                        regex();
                         token = scanner.nextToken();
                         if(token.getTokenType() != TokenType.RIGHT_PAREN)
-                                throw new Exception("Missing closing bracket");
-                }catch(Exception e){System.out.println(e.getMessage());}
+                                throw new InvalidTokenException("Invalid token: missing ).");
+                        pattern+=Character.toString(token.getValue());
+                }
         }
 
+        public String getPattern(){return pattern;}
+        private String printMetaCharacter()
+        {
+                String rep = "";
+                switch(token.getValue()){
+                        case '*':
+                        case '|':
+                        case '?':
+                        case '{':
+                        case '[':
+                        case '(':
+                        case ')':
+                        case '+':
+                        case '.':
+                        case '^':
+                        case '$':
+                                rep+="\\";
+                        default:
+                }
+                rep += Character.toString(token.getValue());
+                return rep;
+        }
 }

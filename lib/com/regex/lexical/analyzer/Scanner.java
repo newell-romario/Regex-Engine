@@ -13,7 +13,7 @@ public class Scanner{
                 this.pattern = pattern;
         }
 
-        public Token nextToken() throws Exception
+        public Token nextToken() throws InvalidTokenException
         {
                 value = 0; 
                 type  = TokenType.EOF; 
@@ -28,26 +28,21 @@ public class Scanner{
                                 case '(':
                                 case ')':
                                 case '$':
+                                case ':':
                                         loc = processMetaCharacters(loc);
                                 break;
                                 case '{':
-                                        try{ loc = processQuantifier(loc);} 
-                                        catch (Exception e){throw e;}
+                                        loc = processQuantifier(loc);
                                 break;
                                 case '[':
-                                        try{
-                                                type = TokenType.CHARACTER_CLASS;
-                                                loc  = processCharacterClass(loc);
-                                        }
-                                        catch(Exception e){throw e;}
+                                        type = TokenType.CHARACTER_CLASS;
+                                        loc  = processCharacterClass(loc);
                                 break; 
                                 case '\\':
                                         type  = TokenType.CHARACTER; 
                                         value = pattern.charAt(loc); 
-                                        try{
-                                                if(loc+1 < pattern.length());
-                                                        loc = processEscapeSequence(loc+1);
-                                        }catch(Exception e){throw e;}
+                                        if(loc+1 < pattern.length());
+                                                loc = processEscapeSequence(loc+1);
                                 break;
                                 default:
                                         type  = TokenType.CHARACTER; 
@@ -58,7 +53,7 @@ public class Scanner{
         }
 
         
-        private int processEscapeSequence(int peek) throws Exception
+        private int processEscapeSequence(int peek) throws InvalidTokenException
         {
                 switch(pattern.charAt(peek)){
                         case 'd':
@@ -98,8 +93,7 @@ public class Scanner{
                                 if(Character.isDigit(value))
                                         peek = processBackReference(peek);
                                 else if(Character.isLetter(value))
-                                        throw new Exception("Erroneous escape sequence.");
-                        break;
+                                        throw new InvalidTokenException("Invalid token: unknown escape sequence.");
                 }
                 return peek;
         }
@@ -120,24 +114,26 @@ public class Scanner{
 
         private int processMetaCharacters(int peek)
         {
-                String temp = "|*+.?^()$";
+                String temp = "|*+.?^()$:";
                 TokenType [] types = {
                         TokenType.ALTERNATION, TokenType.STAR, TokenType.PLUS,
                         TokenType.PERIOD, TokenType.QUESTION_MARK,  TokenType.CARET,
-                        TokenType.LEFT_PAREN, TokenType.RIGHT_PAREN, TokenType.DOLLAR_SIGN
+                        TokenType.LEFT_PAREN, TokenType.RIGHT_PAREN, TokenType.DOLLAR_SIGN, 
+                        TokenType.COLON
                 };
                 type  = types[temp.indexOf(pattern.charAt(peek))];
                 value = pattern.charAt(peek); 
                 return ++peek;
         }
 
-        private int processCharacterClass(int peek) throws Exception
+        private int processCharacterClass(int peek) throws InvalidTokenException
         {
+                int start = peek;
                 ++peek;
                 if(peek < pattern.length() && pattern.charAt(peek) == ']')
-                        throw new Exception("Empty character class []");
+                        throw new InvalidTokenException("Invalid token: [].");
                 else if(peek >= pattern.length())
-                        throw new Exception("Invalid token [.");
+                        throw new InvalidTokenException("Invalid token: [.");
 
                 characterClass = new CharacterClass();
                 if(pattern.charAt(peek) == '^'){
@@ -159,19 +155,16 @@ public class Scanner{
                                         peek = rollback;
                                 break;
                                 case '\\':
-                                        if(peek+1 < pattern.length()){
-                                                try{
-                                                        //Testing a valid escape sequence
-                                                        if(validEscapeSequence(pattern.charAt(peek+1)) == true){
-                                                                ++peek;
-                                                                characterClass.addToEscape(pattern.charAt(peek));
-                                                        }
-                                                        else if(pattern.charAt(peek+1) == ']') {
-                                                                ++peek;
-                                                                characterClass.addToSet(pattern.charAt(peek));
-                                                        }else characterClass.addToSet(pattern.charAt(peek));
-                                                                
-                                                }catch(Exception e){throw e;}
+                                        if(peek+1 < pattern.length()){ 
+                                                //Testing a valid escape sequence
+                                                if(validEscapeSequence(pattern.charAt(peek+1)) == true){
+                                                        ++peek;
+                                                        characterClass.addToEscape(pattern.charAt(peek));
+                                                }
+                                                else if(pattern.charAt(peek+1) == ']') {
+                                                        ++peek;
+                                                        characterClass.addToSet(pattern.charAt(peek));
+                                                }else characterClass.addToSet(pattern.charAt(peek));
                                         }
                                 break;
                                 default:
@@ -184,11 +177,13 @@ public class Scanner{
                         ++peek;
                 }
                 if(peek == pattern.length())
-                        throw new Exception("Missing closing bracket ]");
-                return peek;
+                        throw new InvalidTokenException("Invalid token: missing closing bracket ]");
+                int end = ++peek;
+                characterClass.setRepresentation(pattern.substring(start, end));
+                return end;
         }
 
-        private int processRange(int peek) throws Exception
+        private int processRange(int peek) throws InvalidTokenException
         {
                 int rollback; 
                 int low; 
@@ -201,23 +196,26 @@ public class Scanner{
                         if(pattern.charAt(peek) == '-'){
                                 if(pattern.charAt(rollback-1) == '\\'){
                                         if(validEscapeSequence(pattern.charAt(rollback)))
-                                                throw new Exception("Can't have an escape sequence as a part of a range.");
+                                                throw new InvalidTokenException("Invalid token: escape sequence can not be apart of range.");
                                 } 
                                 if(peek+2 < pattern.length()){
                                         ++peek; 
                                         high = pattern.charAt(peek);
                                         if(pattern.charAt(peek) == '\\')          
                                                 if(validEscapeSequence(pattern.charAt(peek+1)))
-                                                        throw new Exception("Can't have an escape sequence as a part of a range.");
-                                        characterClass.addRange(new Range(low, high));
-                                        rollback = peek;
+                                                        throw new InvalidTokenException("Invalid token: escape sequence can not be apart of range.");
+                                        if(high == ']')
+                                                return rollback;
+                                
+                                        characterClass.addRange(new Range(low, high)); 
+                                        rollback = peek; 
                                 }
                         }
                 }
                 return rollback;
         }
 
-        private int processPosixClass(int peek) throws Exception
+        private int processPosixClass(int peek) throws InvalidTokenException
         {
                 int rollback = peek;
                 if(peek+1 < pattern.length() && 
@@ -235,11 +233,10 @@ public class Scanner{
                                 ++peek;
                                 if(peek < pattern.length()
                                 && pattern.charAt(peek) == ']'){
-                                        ++peek;
                                         if(!validPosixName(posix))
-                                                throw new Exception("Invalid posix class name.");
+                                                throw new InvalidTokenException("Invalid token: unknown posix class.");
                                         characterClass.addPosix(posix);
-                                        rollback = --peek;
+                                        rollback = peek;
                                 }
                         }
                 }
@@ -249,14 +246,14 @@ public class Scanner{
    
   
 
-        private int processQuantifier(int peek) throws Exception
+        private int processQuantifier(int peek) throws InvalidTokenException
         {
                 ++peek;
                 repetition    = new Repetition();
                 String min    = "";
                 String max    = "";
                 if(peek < pattern.length() && pattern.charAt(peek) == '}')
-                        throw new Exception("Empty quantifier.");
+                        throw new InvalidTokenException("Invalid token: empty {}.");
                 
                 while(peek < pattern.length() 
                 && Character.isDigit(pattern.charAt(peek))){
@@ -269,37 +266,41 @@ public class Scanner{
                                 case ',':
                                         ++peek; 
                                         if(peek >= pattern.length())
-                                                throw new Exception("Missing }.");
+                                                throw new InvalidTokenException("Invalid token: missing }.");
                                         while(peek < pattern.length() 
                                         && Character.isDigit(pattern.charAt(peek))){
                                                 max += pattern.charAt(peek);
                                                 ++peek;
                                         }
                                         /*We exited the loop before seeing }
-                                         *which is always the last character.
+                                         *which is always the last character in the
+                                         quantifier.
                                          */
-                                        if(peek < pattern.length()-1)
-                                                throw new Exception("Invalid token.");
+                                        if(peek < pattern.length() && 
+                                        pattern.charAt(peek) != '}')
+                                                throw new InvalidTokenException("Invalid token: "+ Character.toString(pattern.codePointAt(peek)));
+                                        else if(peek >= pattern.length())
+                                                throw new InvalidTokenException("Invalid token: missing }.");
                                 break;
                                 case '}':
                                         max = min;
                                 break;
                                 default:        
-                                        throw new Exception("Invalid token.");
+                                        throw new InvalidTokenException("Invalid token: "+ Character.toString(pattern.codePointAt(peek)));
                         }
                         if(peek < pattern.length() && pattern.charAt(peek) !='}' 
-                        || peek == pattern.length())
-                                throw new Exception("Missing }.");
+                        || peek >= pattern.length())
+                                 throw new InvalidTokenException("Invalid token: missing }.");
 
                         if(min != "")
                                 repetition.setMin(Double.parseDouble(min));
                 
                         if(max != "")
                                 repetition.setMax(Double.parseDouble(max));   
-                }else throw new Exception("Missing }.");
+                }else  throw new InvalidTokenException("Invalid token: missing }.");
 
                 type = TokenType.REPETITION;
-                return peek;
+                return ++peek;
         }
 
         private boolean validPosixName(String name)
@@ -319,24 +320,22 @@ public class Scanner{
                 return valid;
         }
 
-        private boolean validEscapeSequence(int val) throws Exception
+        private boolean validEscapeSequence(int val) throws InvalidTokenException
         {
                 String escape = "dDwWsS";
                 if(Character.isLetter(val))
                         if(escape.indexOf(val) == -1)
-                                throw new Exception("Erroneous escape sequence.");
+                                throw new InvalidTokenException("Invalid token: unknown escape sequence.");
                         else return true; 
                 return false;
         }
 
-        public Token peek()
+        public Token peek() throws InvalidTokenException
         {
                 Token token = null;
                 int peek = loc;
-                try{
-                        token = nextToken(); 
-                        loc = peek;
-                }catch(Exception e){System.out.println(e.getMessage());} 
+                token = nextToken(); 
+                loc = peek;
                 return token;
         }
 
