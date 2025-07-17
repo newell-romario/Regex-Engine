@@ -10,16 +10,18 @@ public class Repetition{
 
         public void setMin(double min) throws InvalidTokenException
         {
-                if(min > max)
-                        throw new InvalidTokenException("".format("%.f > %.f. Did you mean {%.f,%.f} instead {%.f, %.f}?", min, max, max, min, min, max));
+                if(min > max && 
+                max != Double.POSITIVE_INFINITY)
+                        throw new InvalidTokenException(String.format("%1$.0f > %2$.0f. Did you mean {%2$.0f,%1$f} instead {%1$.0f, %2$.0f}?", min, max));
                 this.min = min; 
         }
 
 
         public void setMax(double max) throws InvalidTokenException
         {
-                if(max < min)
-                        throw new InvalidTokenException("".format("%.f < %.f. Did you mean {%.f,%.f} instead of {%.f,%.f}?", max, min, max, min, min, max));
+                if(max < min && 
+                min != Double.POSITIVE_INFINITY)
+                        throw new InvalidTokenException(String.format("%1$.0f < %2$.0f. Did you mean {%1$.0f,%2$.0f} instead of {%1$.0f,%2$.0f}?", max, min));
                 this.max = max;
         }
 
@@ -37,8 +39,7 @@ public class Repetition{
                         smin += (int)min == (int)Double.POSITIVE_INFINITY? "" : (int)min;
                         smax += (int)max == (int)Double.POSITIVE_INFINITY? "" : (int)max; 
                         rep+=smin+","+smax+"}";
-                }
-                        
+                }       
                 return rep; 
         }
 }

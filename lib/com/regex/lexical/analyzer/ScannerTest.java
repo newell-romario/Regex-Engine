@@ -22,7 +22,7 @@ public class ScannerTest {
                 for(TokenType type : types){
                         try{
                                 assertEquals(type, scanner.nextToken().getTokenType());
-                        }catch(Exception e){}        
+                        }catch(InvalidTokenException e){System.err.println(e.getMessage());}        
                 }   
         }
 
@@ -42,7 +42,7 @@ public class ScannerTest {
                                 assertEquals(TokenType.CHARACTER, token.getTokenType());
                                 token = scanner.nextToken(); 
                         }   
-                }catch(Exception e){}
+                }catch(InvalidTokenException e){System.err.println(e.getMessage());}
         }
 
         @Test
@@ -66,7 +66,7 @@ public class ScannerTest {
                                 if(token.getTokenType() == TokenType.BACK_REFERENCE)
                                         assertEquals(token.getValue(), 12);
                         }
-                }catch(Exception e){System.out.println(e.getMessage());}
+                }catch(InvalidTokenException e){System.err.println(e.getMessage());}
         }
 
         @Test
@@ -81,7 +81,7 @@ public class ScannerTest {
                                 assertEquals(scanner.nextToken().getTokenType(), TokenType.REPETITION);
                                 assertEquals(min[i], scanner.getRepetition().getMin(), 0.0);
                                 assertEquals(scanner.getRepetition().getMax(), Double.POSITIVE_INFINITY, 0.0);
-                        }catch(Exception e){System.out.println(e.getMessage());}
+                        }catch(InvalidTokenException e){System.err.println(e.getMessage());}
                 }       
         }
         
@@ -98,7 +98,7 @@ public class ScannerTest {
                                 assertEquals(scanner.nextToken().getTokenType(), TokenType.REPETITION);
                                 assertEquals(max[i], scanner.getRepetition().getMax(), 0.0);
                                 assertEquals(scanner.getRepetition().getMin(), Double.POSITIVE_INFINITY, 0.0);
-                        }catch(Exception e){System.out.println(e.getMessage());}
+                        }catch(InvalidTokenException e){System.err.println(e.getMessage());}
                 } 
         }
 
@@ -114,7 +114,7 @@ public class ScannerTest {
                                 assertEquals(scanner.nextToken().getTokenType(), TokenType.REPETITION);
                                 assertEquals(range[i][0], scanner.getRepetition().getMin(), 0.0);
                                 assertEquals(range[i][1], scanner.getRepetition().getMax(), 0.0);
-                        }catch(Exception e){System.out.println(e.getMessage());}
+                        }catch(InvalidTokenException e){System.err.println(e.getMessage());}
                 } 
         }
 
@@ -129,7 +129,7 @@ public class ScannerTest {
                         assertEquals(scanner.nextToken().getTokenType(), TokenType.REPETITION);
                         assertEquals(range, scanner.getRepetition().getMin(), 0.0);
                         assertEquals(range, scanner.getRepetition().getMax(), 0.0);
-                }catch(Exception e){System.out.println(e.getMessage());}
+                }catch(InvalidTokenException e){System.err.println(e.getMessage());}
         }
 
         @Test
@@ -158,7 +158,7 @@ public class ScannerTest {
                         Token token = scanner.nextToken();
                         assertEquals(token.getTokenType(), TokenType.CHARACTER_CLASS);
                         assertEquals(scanner.getCharacterClass().stringRepSet(), mem);
-                }catch(Exception e){System.out.println(e.getMessage());}
+                }catch(InvalidTokenException e){System.err.println(e.getMessage());}
         }
 
         @Test
@@ -171,7 +171,7 @@ public class ScannerTest {
                         Token token = scanner.nextToken();
                         assertEquals(token.getTokenType(), TokenType.CHARACTER_CLASS);
                         assertEquals(scanner.getCharacterClass().stringRepSet(), mem);
-                }catch(Exception e){System.out.println(e.getMessage());}
+                }catch(InvalidTokenException e){System.err.println(e.getMessage());}
         }
 
         @Test 
@@ -301,5 +301,4 @@ public class ScannerTest {
                         }catch(Exception e){System.out.println(e.getMessage());}
                 }
         }
-        
 }
