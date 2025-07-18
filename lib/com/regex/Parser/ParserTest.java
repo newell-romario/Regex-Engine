@@ -22,6 +22,7 @@ public class ParserTest {
                         try{
                                 parser.compile();
                                 assertEquals(pattern, parser.getPattern());
+                                System.out.println(pattern);
                         }catch(Exception e){
                                 System.err.println(e.getMessage());
                         }

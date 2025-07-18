@@ -21,7 +21,7 @@ public class CharacterClass{
         public void addRange(Range r)
         {
                 for (Range val : range)
-                        if(val.getLow() == r.getLow() && r.getHigh() == val.getHigh())
+                        if(val.getMin() == r.getMin() && r.getMax() == val.getMax())
                                 return;
                 this.range.add(r);
         }
@@ -55,7 +55,6 @@ public class CharacterClass{
         public ArrayList<String> getPosix(){return posix;}
         public ArrayList<Integer> getSet(){return set;}
         public ArrayList<Integer> getEscape(){return escape;}
-        public String getRepresentation(){return rep;}
         public boolean isNegated(){return negate;}
 
         public String stringRepSet()
@@ -65,5 +64,11 @@ public class CharacterClass{
                         mem += Character.toString(set.get(i));
                         
                 return mem;
+        }
+
+        @Override
+        public String toString()
+        {
+                return rep;
         }
 }

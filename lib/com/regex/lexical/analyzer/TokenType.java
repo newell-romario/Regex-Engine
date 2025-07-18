@@ -29,8 +29,8 @@ public enum TokenType {
         /*CHARACTER_CLASS */
         CHARACTER_CLASS,
 
-        /*REPETITION*/
-        REPETITION,
+        /*RANGE*/
+        RANGE,
 
         /*OTHER*/
         ERROR,

@@ -1,3 +1,3 @@
-public interface Transition {
-        public State[] transition(int val);
+public abstract class  Transition{
+        public abstract State [] move(int val);
 }

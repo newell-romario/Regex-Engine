@@ -1,4 +1,4 @@
-public abstract class State implements Transition{
+public abstract class State{
         /*Unique key representing each state */
         private long key;
         
@@ -20,7 +20,7 @@ public abstract class State implements Transition{
          */
         private byte  anchors;
 
-        /*Stores the  accept state for this NFA*/
+        /*Stores the  accept state*/
         private State   accept;
 
         /*Stores the old accept state*/

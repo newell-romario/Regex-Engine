@@ -14,7 +14,7 @@ public class Parser {
                 regex();
                 token = scanner.nextToken(); 
                 if(token.getTokenType() != TokenType.EOF){
-                        throw new InvalidTokenException("Invalid token: " + Character.toString(token.getValue()));
+                        throw new InvalidTokenException("Invalid token: " + token.toString());
                 }    
         }
 
@@ -22,15 +22,15 @@ public class Parser {
         {
                 token = scanner.peek();
                 if(token.getTokenType() == TokenType.CARET){
-                        pattern+= Character.toString(token.getValue());
-                        token = scanner.nextToken();
+                        pattern += token.toString();
+                        token    = scanner.nextToken();
                 }
 
                 union();
                 token = scanner.peek();
                 if(token.getTokenType() == TokenType.DOLLAR_SIGN){
-                        pattern+= Character.toString(token.getValue());
-                        token = scanner.nextToken();
+                        pattern += token.toString();
+                        token    = scanner.nextToken();
                 }
         }
 
@@ -39,13 +39,13 @@ public class Parser {
                 concatenation();
                 token = scanner.peek();
                 if(token.getTokenType() == TokenType.DOLLAR_SIGN){
-                        pattern+= Character.toString(token.getValue());
+                        pattern+= token.toString();
                         token = scanner.nextToken();  
                 }
 
                 token = scanner.peek();
                 if(token.getTokenType() == TokenType.ALTERNATION){
-                        pattern+=Character.toString(token.getValue());
+                        pattern+=token.toString();
                         token = scanner.nextToken();
                         regex();
                 }
@@ -90,32 +90,30 @@ public class Parser {
                         case NON_WHITESPACE:
                         case WORD:
                         case NON_WORD:
-                                pattern+="\\";
-                                pattern+=Character.toString(token.getValue());
+                                pattern+=token.toString();
                         break;
                         case BACK_REFERENCE:
                                 if(token.getValue() > groups)
                                         throw new InvalidTokenException("Invalid token: invalid back reference.");
                                 pattern+="\\";
-                                pattern+=Character.toString(token.getValue());
+                                pattern+=token.toString();
                         break;
                         case CHARACTER:
                         case COLON:
-                                pattern+=printMetaCharacter();
+                                pattern+=token.toString();
                         break;
                         case PERIOD:
-                                pattern+=Character.toString(token.getValue());
+                                pattern+=token.toString();
                         break;
                         case LEFT_PAREN:
-                                pattern+=Character.toString(token.getValue());
+                                pattern+=token.toString();
                                 group();
                         break;
                         case CHARACTER_CLASS:
-                                CharacterClass c = scanner.getCharacterClass();
-                                pattern+=c.getRepresentation();
+                                pattern+=token.toString();
                         break;
                         default:
-                                throw new InvalidTokenException("Invalid token: "+ Character.toString(token.getValue()));
+                                throw new InvalidTokenException("Invalid token: "+ token.toString());
                 }
         }
 
@@ -127,12 +125,11 @@ public class Parser {
                                 case STAR:
                                 case QUESTION_MARK:
                                 case PLUS:
-                                        pattern+=Character.toString(token.getValue());
+                                        pattern+=token.toString();
                                         token = scanner.nextToken();
                                 break;
-                                case REPETITION:
-                                        Repetition repetition = scanner.getRepetition();
-                                        pattern+=repetition;
+                                case RANGE:
+                                        pattern+=token.toString();
                                         token = scanner.nextToken();
                                 break;
                                 default:
@@ -153,7 +150,7 @@ public class Parser {
                  */
                 token = scanner.peek();
                 if(token.getTokenType() == TokenType.QUESTION_MARK){
-                        pattern+=Character.toString(token.getValue());
+                        pattern+=token.toString();
                         token = scanner.nextToken();
                         token = scanner.peek();
                         if(token.getTokenType() == TokenType.CHARACTER){
@@ -165,7 +162,7 @@ public class Parser {
                                                 case 'm':
                                                 case 's':
                                                 case 'U':
-                                                        flags+=Character.toString(token.getValue());
+                                                        flags+=token.toString();
                                                 break;
                                                 default:
                                                         exit = false;
@@ -179,57 +176,36 @@ public class Parser {
 
                                 if(token.getTokenType() == TokenType.COLON){
                                         /*Turn off non capturing*/
-                                        pattern+=Character.toString(token.getValue());
+                                        pattern+=token.toString();
                                         regex();
                                         token = scanner.nextToken();
                                         if(token.getTokenType() != TokenType.RIGHT_PAREN)
                                                 throw new InvalidTokenException("Invalid token: missing ).");
                                                 /*take care of group */
-                                                pattern+=Character.toString(token.getValue());
+                                                pattern+=token.toString();
 
                                 }else if(token.getTokenType() == TokenType.RIGHT_PAREN){
                                         /*take care of group */
-                                        pattern+=Character.toString(token.getValue());
+                                        pattern+=token.toString();
                                 }else 
                                         throw new InvalidTokenException("Invalid token: unknow flag.");
                         }else if(token.getTokenType() == TokenType.COLON){
-                                pattern+=Character.toString(token.getValue());
+                                pattern+=token.toString();
                                 token = scanner.nextToken();
                                 regex();
                                 if(token.getTokenType() != TokenType.RIGHT_PAREN)
                                         throw new InvalidTokenException("Invalid token: missing ).");
                                 /*take care of group */
-                                pattern+=Character.toString(token.getValue());
+                                pattern+=token.toString();
                         }else throw new InvalidTokenException("Invalid token: unknow flag.");
                 }else{
                         regex();
                         token = scanner.nextToken();
                         if(token.getTokenType() != TokenType.RIGHT_PAREN)
                                 throw new InvalidTokenException("Invalid token: missing ).");
-                        pattern+=Character.toString(token.getValue());
+                        pattern+=token.toString();
                 }
         }
 
         public String getPattern(){return pattern;}
-        private String printMetaCharacter()
-        {
-                String rep = "";
-                switch(token.getValue()){
-                        case '*':
-                        case '|':
-                        case '?':
-                        case '{':
-                        case '[':
-                        case '(':
-                        case ')':
-                        case '+':
-                        case '.':
-                        case '^':
-                        case '$':
-                                rep+="\\";
-                        default:
-                }
-                rep += Character.toString(token.getValue());
-                return rep;
-        }
 }
