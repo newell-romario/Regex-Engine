@@ -4,10 +4,8 @@ public enum TokenType {
         STAR,
         PLUS,
         PERIOD,
-        QUESTION_MARK,
-        CARET,
         COLON,
-        DOLLAR_SIGN,
+        QUESTION_MARK,
         LEFT_PAREN,
         RIGHT_PAREN,
 
@@ -19,6 +17,15 @@ public enum TokenType {
         NON_WHITESPACE,
         WORD,
         NON_WORD,
+
+        /*ASSERTIONS*/
+        DOLLAR_SIGN,
+        CARET,
+        WORD_BOUNDARY,
+        NON_WORD_BOUNDARY,
+        STRICT_QUESTION_MARK,
+        STRICT_CARET,
+        
 
         /*CHARACTER*/
         CHARACTER,

@@ -1,4 +1,4 @@
-public abstract class State{
+public class State{
         /*Unique key representing each state */
         private long key;
         
@@ -11,37 +11,30 @@ public abstract class State{
          * s - match \n
          * U - ungreedy
         */
-        private byte   flags;
+        private byte flags;
 
-        /* We can set anchors which ensure the 
-         * asserts properties about the match. 
-         *^ - match must start at the beginning of line.
-         *$ - match must end at the end of line.   
-         */
-        private byte  anchors;
 
         /*Stores the  accept state*/
-        private State   accept;
+        private State accept;
 
-        /*Stores the old accept state*/
-        private State   oldAccept;
+        /*Stores the state type*/
+        private StateType stateType;
+        
 
-        public State()
+        public State(StateType type)
         {
+                type    = stateType;
                 key     =   System.currentTimeMillis();
                 regex   = "";
                 flags   = 0; 
-                anchors = 0;
-                accept  = oldAccept = null;
+                accept  = null;
         }
         
         public void setFlags(byte flags){this.flags = flags;}
-        public void setAnchors(byte anchors){this.anchors = anchors;}
         public void setAccept(State accept){this.accept = accept;}
         public byte getFlags(){return flags;}
-        public byte getAnchors(){return anchors;}
         public long getKey(){return key;}
         public String getRegex(){return regex;}
         public State getAccpet(){return accept;}
-        public State getOldAcceppt(){return oldAccept;}
+        public StateType getStateType(){return stateType;}
 }

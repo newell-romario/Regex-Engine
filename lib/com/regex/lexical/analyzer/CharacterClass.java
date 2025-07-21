@@ -32,7 +32,6 @@ public class CharacterClass{
                         this.posix.add(posixClass);
         }
 
-
         public void addToSet(int mem)
         {
                 Integer elem = mem;
@@ -46,8 +45,6 @@ public class CharacterClass{
                 if(escape.indexOf(elem) == -1)
                         escape.add(elem);
         }
-
-
 
         public void setRepresentation(String s){rep = s;}
         public void negate(){negate = !negate;}

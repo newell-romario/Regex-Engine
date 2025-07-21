@@ -308,4 +308,21 @@ public class ScannerTest {
                         }catch(Exception e){System.out.println(e.getMessage());}
                 }
         }
+
+        @Test
+        public void testEscapeSequences()
+        {
+                String pattern = "\\d\\D\\s\\S\\w\\W\\b\\B\\A\\Z";
+                TokenType [] types = {  TokenType.DIGITS,TokenType.NON_DIGITS,TokenType.WHITESPACE,
+                                        TokenType.NON_WHITESPACE,TokenType.WORD,TokenType.NON_WORD,
+                                        TokenType.WORD_BOUNDARY, TokenType.NON_WORD_BOUNDARY, 
+                                        TokenType.STRICT_CARET,TokenType.STRICT_QUESTION_MARK, TokenType.EOF};
+                Scanner scanner = new Scanner(pattern);
+                for(TokenType type : types){
+                        try{
+                              Token token  = scanner.nextToken();
+                              assertEquals(type, token.getTokenType()); 
+                        }catch(InvalidTokenException e){System.err.println(e);}
+                }
+        }
 }

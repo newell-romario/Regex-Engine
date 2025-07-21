@@ -69,21 +69,43 @@ public class Scanner{
                 switch(pattern.charAt(peek)){
                         case 'd':
                                 type  = TokenType.DIGITS;
+                                ++peek;
                         break;
                         case 'D': 
                                 type  = TokenType.NON_DIGITS; 
+                                ++peek;
                         break;
                         case 's':
                                 type  = TokenType.WHITESPACE;
+                                ++peek;
                         break; 
                         case 'S':
                                 type  = TokenType.NON_WHITESPACE;
+                                ++peek;
                         break;
                         case 'w':
-                                type = TokenType.WORD; 
+                                type = TokenType.WORD;
+                                ++peek;
                         break; 
                         case 'W':
-                                type = TokenType.NON_WORD;      
+                                type = TokenType.NON_WORD;
+                                ++peek;    
+                        break;
+                        case 'b':
+                                type = TokenType.WORD_BOUNDARY;
+                                ++peek;
+                        break; 
+                        case 'B':
+                                type = TokenType.NON_WORD_BOUNDARY;
+                                ++peek;
+                        break;
+                        case 'A':
+                                type = TokenType.STRICT_CARET;
+                                ++peek;
+                        break;
+                        case 'Z':
+                                type = TokenType.STRICT_QUESTION_MARK;
+                                ++peek;
                         break;
                         case '|':
                         case '*':

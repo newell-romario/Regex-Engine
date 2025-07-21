@@ -20,29 +20,13 @@ public class Parser {
 
         private void regex() throws InvalidTokenException
         {
-                token = scanner.peek();
-                if(token.getTokenType() == TokenType.CARET){
-                        pattern += token.toString();
-                        token    = scanner.nextToken();
-                }
-
                 union();
                 token = scanner.peek();
-                if(token.getTokenType() == TokenType.DOLLAR_SIGN){
-                        pattern += token.toString();
-                        token    = scanner.nextToken();
-                }
         }
 
         private void union() throws InvalidTokenException
         {
                 concatenation();
-                token = scanner.peek();
-                if(token.getTokenType() == TokenType.DOLLAR_SIGN){
-                        pattern+= token.toString();
-                        token = scanner.nextToken();  
-                }
-
                 token = scanner.peek();
                 if(token.getTokenType() == TokenType.ALTERNATION){
                         pattern+=token.toString();
@@ -68,6 +52,12 @@ public class Parser {
                         case LEFT_PAREN:
                         case CHARACTER_CLASS:
                         case BACK_REFERENCE:
+                        case DOLLAR_SIGN:
+                        case CARET:
+                        case WORD_BOUNDARY:
+                        case NON_WORD_BOUNDARY:
+                        case STRICT_CARET:
+                        case STRICT_QUESTION_MARK:
                                 concatenation();
                         break;
                         default:
@@ -84,12 +74,20 @@ public class Parser {
         {
                 token = scanner.nextToken();
                 switch(token.getTokenType()){
+                        /*Escape Sequence*/
                         case DIGITS:
                         case NON_DIGITS:
                         case WHITESPACE:
                         case NON_WHITESPACE:
                         case WORD:
                         case NON_WORD:
+                        /*Assertions*/
+                        case DOLLAR_SIGN:
+                        case CARET:
+                        case WORD_BOUNDARY:
+                        case NON_WORD_BOUNDARY:
+                        case STRICT_CARET:
+                        case STRICT_QUESTION_MARK:
                                 pattern+=token.toString();
                         break;
                         case BACK_REFERENCE:
@@ -146,7 +144,7 @@ public class Parser {
                 String flags = "";
                 ++groups;
                 /*TO DO
-                 * Take care of nonmatch sub group and flags
+                 * Take care of  sub group and flags
                  */
                 token = scanner.peek();
                 if(token.getTokenType() == TokenType.QUESTION_MARK){

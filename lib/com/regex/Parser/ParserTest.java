@@ -14,7 +14,8 @@ public class ParserTest {
                                 "^#[[:xdigit:]]{6}$", 
                                 "^[_[:alpha:]][_[:alnum:]]*$",
                                 "^\\([^()]*\\)$|^\\([^()]*\\([^()]*\\)[^()]*\\)$",
-                                "(^foo)|(bar$)", 
+                                "(^foo$)|(^bar$)", 
+                                "^foo$|^bar$",
                                 "a(?i:hello)b"
                         };
                 for(String pattern : patterns){
