@@ -1,3 +1,6 @@
+package parser;
+import exceptions.InvalidTokenException;
+
 public class Parser {
         private Scanner scanner;
         private Token   token;

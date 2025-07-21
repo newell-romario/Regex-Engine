@@ -1,3 +1,4 @@
+package lexical;
 public class Token {
         private TokenType type; 
         private int [] values;

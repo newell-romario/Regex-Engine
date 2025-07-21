@@ -1,3 +1,4 @@
+package lexical;
 public class Range{
         private double min;
         private double max;

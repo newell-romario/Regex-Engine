@@ -1,3 +1,4 @@
+package automaton;
 public class State{
         /*Unique key representing each state */
         private long key;

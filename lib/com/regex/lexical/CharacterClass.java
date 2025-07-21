@@ -1,3 +1,5 @@
+package lexical;
+
 import java.util.ArrayList;
 
 public class CharacterClass{

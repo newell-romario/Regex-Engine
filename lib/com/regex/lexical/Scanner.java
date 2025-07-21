@@ -1,3 +1,6 @@
+package lexical;
+
+import exceptions.InvalidTokenException;
 
 public class Scanner{
         private int loc;

@@ -1,3 +1,4 @@
+package automaton;
 public enum PosixClass{
         ALNUM,
         ALPHA,

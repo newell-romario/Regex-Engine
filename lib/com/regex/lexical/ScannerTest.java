@@ -1,5 +1,7 @@
+package lexical;
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
+import exceptions.InvalidTokenException;
 
 public class ScannerTest {
 

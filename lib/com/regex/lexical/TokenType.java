@@ -1,3 +1,4 @@
+package lexical;
 public enum TokenType {
         /*METACHARACTERS*/
         ALTERNATION,

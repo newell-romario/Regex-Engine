@@ -1,5 +1,7 @@
+package parser;
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
+import exceptions.InvalidTokenException;
 
 public class ParserTest {
         @Test
@@ -24,7 +26,7 @@ public class ParserTest {
                                 parser.compile();
                                 assertEquals(pattern, parser.getPattern());
                                 System.out.println(pattern);
-                        }catch(Exception e){
+                        }catch(InvalidTokenException e){
                                 System.err.println(e.getMessage());
                         }
                 }
