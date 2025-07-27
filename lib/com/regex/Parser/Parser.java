@@ -1,12 +1,13 @@
 package parser;
+import automaton.State;
 import exceptions.InvalidTokenException;
+import lexical.*;
 
 public class Parser {
         private Scanner scanner;
         private Token   token;
         private String  pattern = "";
-        int groups = 0;
-
+        private int groups = 0;
         public Parser(String pattern)
         {
                 scanner = new Scanner(pattern);
@@ -43,24 +44,12 @@ public class Parser {
                 basicRegex();
                 token = scanner.peek();
                 switch(token.getTokenType()){
-                        case DIGITS:
-                        case NON_DIGITS:
-                        case WHITESPACE:
-                        case NON_WHITESPACE:
-                        case WORD:
-                        case NON_WORD:
                         case CHARACTER:
                         case COLON:
-                        case PERIOD:
                         case LEFT_PAREN:
                         case CHARACTER_CLASS:
                         case BACK_REFERENCE:
-                        case DOLLAR_SIGN:
-                        case CARET:
-                        case WORD_BOUNDARY:
-                        case NON_WORD_BOUNDARY:
-                        case STRICT_CARET:
-                        case STRICT_QUESTION_MARK:
+                        case ASSERTIONS:
                                 concatenation();
                         break;
                         default:
@@ -69,29 +58,20 @@ public class Parser {
 
         private void basicRegex() throws InvalidTokenException
         {
-                atom();
-                quantifiers();
+                State state = atom();
+                quantifiers(state);
         }
         
-        private void atom() throws InvalidTokenException
-        {
+        private State atom() throws InvalidTokenException
+        {       
+                /*Start state*/
+                State start = null;
+                CharacterClass c= null;
                 token = scanner.nextToken();
                 switch(token.getTokenType()){
-                        /*Escape Sequence*/
-                        case DIGITS:
-                        case NON_DIGITS:
-                        case WHITESPACE:
-                        case NON_WHITESPACE:
-                        case WORD:
-                        case NON_WORD:
-                        /*Assertions*/
-                        case DOLLAR_SIGN:
-                        case CARET:
-                        case WORD_BOUNDARY:
-                        case NON_WORD_BOUNDARY:
-                        case STRICT_CARET:
-                        case STRICT_QUESTION_MARK:
-                                pattern+=token.toString();
+                        case ASSERTIONS:
+                               start = StateFactory.assertion(Assertion.getType(token.getValue()));
+                               pattern += token.toString();
                         break;
                         case BACK_REFERENCE:
                                 if(token.getValue() > groups)
@@ -101,9 +81,9 @@ public class Parser {
                         break;
                         case CHARACTER:
                         case COLON:
-                                pattern+=token.toString();
-                        break;
-                        case PERIOD:
+                                int [] vals = new int[1];
+                                vals[0] = token.getValue();
+                                start = StateFactory.normal(vals);
                                 pattern+=token.toString();
                         break;
                         case LEFT_PAREN:
@@ -111,21 +91,41 @@ public class Parser {
                                 group();
                         break;
                         case CHARACTER_CLASS:
+                                c = token.getCharacterClass();
+                                start = StateFactory.charClass(c);
                                 pattern+=token.toString();
                         break;
                         default:
                                 throw new InvalidTokenException("Invalid token: "+ token.toString());
                 }
+
+                /*Accept State*/
+                State accept  = StateFactory.normal(null);
+
+                /*Connect start state to accept*/
+                State [] next = start.getStates();
+                next[0] = accept;
+                start.setAccept(accept);
+                return start;
         }
 
-        private void quantifiers()
+        private State quantifiers(State state)
         {
                 try {
                         token = scanner.peek();
                         switch(token.getTokenType()){
                                 case STAR:
+                                        state = StateFactory.star(state);
+                                        token = scanner.nextToken();
+                                        pattern+=token.toString();
+                                break;
                                 case QUESTION_MARK:
+                                        state = StateFactory.question(state);
+                                        pattern+=token.toString();
+                                        token = scanner.nextToken();
+                                break;
                                 case PLUS:
+                                        state = StateFactory.plus(state); 
                                         pattern+=token.toString();
                                         token = scanner.nextToken();
                                 break;
@@ -135,10 +135,11 @@ public class Parser {
                                 break;
                                 default:
                                 break;
-                        }       
-                }catch(Exception e){
-                    System.err.println(e.getMessage());
-                }
+                        }  
+                        
+                }catch(Exception e){System.err.println(e.getMessage());}
+                
+                return state;  
         }
 
         private void group() throws InvalidTokenException
@@ -209,4 +210,7 @@ public class Parser {
         }
 
         public String getPattern(){return pattern;}
+
+
+
 }

@@ -1,18 +1,19 @@
 package lexical;
+
 public class Range{
-        private double min;
-        private double max;
-        public Range(double min, double max)
+        private long min;
+        private long max;
+        public Range(long min, long max)
         {     
                 this.min = min;
                 this.max = max;
         }
 
-        public void setMin(double min){this.min = min;}
-        public void setMax(double max){this.max = max;}
+        public void setMin(long min){this.min = min;}
+        public void setMax(long max){this.max = max;}
 
-        public double getMin(){return min;}
-        public double getMax(){return max;}
+        public long getMin(){return min;}
+        public long getMax(){return max;}
         
         @Override
         public String toString()
@@ -23,12 +24,10 @@ public class Range{
                 else{
                         String smin = "";
                         String smax = "";
-                        smin += (int)min == (int)Double.POSITIVE_INFINITY? "" : (int)min;
-                        smax += (int)max == (int)Double.POSITIVE_INFINITY? "" : (int)max; 
+                        smin += min == Double.doubleToLongBits(min)? "" : min;
+                        smax += max == Double.doubleToLongBits(max)? "" : max; 
                         rep+=smin+","+smax+"}";
                 }       
                 return rep; 
         }
 }
-
-

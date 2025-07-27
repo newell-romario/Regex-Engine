@@ -1,7 +1,7 @@
 package parser;
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
-import exceptions.InvalidTokenException;
+import exceptions.*;
 
 public class ParserTest {
         @Test

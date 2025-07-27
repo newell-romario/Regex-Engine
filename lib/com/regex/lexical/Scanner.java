@@ -1,6 +1,5 @@
 package lexical;
-
-import exceptions.InvalidTokenException;
+import exceptions.*;
 
 public class Scanner{
         private int loc;
@@ -9,6 +8,9 @@ public class Scanner{
         private CharacterClass set;
         private Range range;
         private TokenType type;
+        private final static Long NEGATIVE_INFINITY = Double.doubleToLongBits(Double.NEGATIVE_INFINITY);
+        private final static Long POSITIVE_INFINITY = Double.doubleToLongBits(Double.POSITIVE_INFINITY);
+
 
         public Scanner(String pattern)
         {
@@ -24,17 +26,24 @@ public class Scanner{
                 type   = TokenType.EOF; 
                 if(loc < pattern.length())
                         switch(pattern.charAt(loc)){
+                                case '?':       
+                                case '^':
                                 case '|':
                                 case '*':
                                 case '+':
-                                case '.':
-                                case '?':       
-                                case '^':
                                 case '(':
                                 case ')':
                                 case '$':
                                 case ':':
                                         loc = processMetaCharacters(loc);
+                                break;
+                                case '.':
+                                        type = TokenType.CHARACTER_CLASS;
+                                        set  = new CharacterClass();
+                                        set.addMembers('\r');
+                                        set.addMembers('\n');
+                                        set.negate();
+                                ++loc;
                                 break;
                                 case '{':
                                         loc = processRangeQuantifier(loc);
@@ -71,43 +80,23 @@ public class Scanner{
         {
                 switch(pattern.charAt(peek)){
                         case 'd':
-                                type  = TokenType.DIGITS;
-                                ++peek;
-                        break;
                         case 'D': 
-                                type  = TokenType.NON_DIGITS; 
-                                ++peek;
-                        break;
                         case 's':
-                                type  = TokenType.WHITESPACE;
-                                ++peek;
-                        break; 
                         case 'S':
-                                type  = TokenType.NON_WHITESPACE;
-                                ++peek;
-                        break;
                         case 'w':
-                                type = TokenType.WORD;
-                                ++peek;
-                        break; 
                         case 'W':
-                                type = TokenType.NON_WORD;
+                                set = new CharacterClass();
+                                set.addEscape(Escape.getType(pattern.charAt(peek)));
+                                type = TokenType.CHARACTER_CLASS;
+                                set.setRepresentation("\\"+pattern.charAt(peek));
                                 ++peek;    
                         break;
                         case 'b':
-                                type = TokenType.WORD_BOUNDARY;
-                                ++peek;
-                        break; 
                         case 'B':
-                                type = TokenType.NON_WORD_BOUNDARY;
-                                ++peek;
-                        break;
                         case 'A':
-                                type = TokenType.STRICT_CARET;
-                                ++peek;
-                        break;
                         case 'Z':
-                                type = TokenType.STRICT_QUESTION_MARK;
+                                values[1] = pattern.charAt(peek);
+                                type = TokenType.ASSERTIONS;
                                 ++peek;
                         break;
                         case '|':
@@ -149,12 +138,12 @@ public class Scanner{
 
         private int processMetaCharacters(int peek)
         {
-                String temp = "|*+.?^()$:";
+                String temp = "|*+?^()$:";
                 TokenType [] types = {
-                        TokenType.ALTERNATION, TokenType.STAR, TokenType.PLUS,
-                        TokenType.PERIOD, TokenType.QUESTION_MARK,  TokenType.CARET,
-                        TokenType.LEFT_PAREN, TokenType.RIGHT_PAREN, TokenType.DOLLAR_SIGN, 
-                        TokenType.COLON
+                        TokenType.ALTERNATION, TokenType.STAR, TokenType.PLUS, 
+                        TokenType.QUESTION_MARK,  TokenType.ASSERTIONS,
+                        TokenType.LEFT_PAREN, TokenType.RIGHT_PAREN, 
+                        TokenType.ASSERTIONS, TokenType.COLON
                 };
                 type      = types[temp.indexOf(pattern.charAt(peek))];
                 values[0] = pattern.charAt(peek); 
@@ -185,7 +174,7 @@ public class Scanner{
                                          * Add the character to the set instead.
                                          */
                                         if(peek == rollback)
-                                                set.addToSet(pattern.charAt(peek));
+                                                set.addMembers(pattern.charAt(peek));
                                         peek = rollback;
                                 break;
                                 case '\\':
@@ -193,18 +182,18 @@ public class Scanner{
                                                 //Testing a valid escape sequence
                                                 if(validEscapeSequence(pattern.charAt(peek+1)) == true){
                                                         ++peek;
-                                                        set.addToEscape(pattern.charAt(peek));
+                                                        set.addEscape(Escape.getType(pattern.charAt(peek)));
                                                 }
                                                 else if(pattern.charAt(peek+1) == ']') {
                                                         ++peek;
-                                                        set.addToSet(pattern.charAt(peek));
-                                                }else set.addToSet(pattern.charAt(peek));
+                                                        set.addMembers(pattern.charAt(peek));
+                                                }else set.addMembers(pattern.charAt(peek));
                                         }
                                 break;
                                 default:
                                       int range = processRange(peek);
                                       if(range == peek)
-                                                set.addToSet(pattern.charAt(peek));
+                                                set.addMembers(pattern.charAt(peek));
                                         else peek = range;
                         }
                         ++peek;
@@ -265,9 +254,10 @@ public class Scanner{
                                 ++peek;
                                 if(peek < pattern.length() && pattern.charAt(peek) == ']'){
                                         String posix = pattern.substring(start, end);
-                                        if(!validPosixName(posix))
+                                        Posix p = Posix.getPosix(posix);
+                                        if(p == Posix.ERROR)
                                                 throw new InvalidTokenException("Invalid token: unknown posix class.");
-                                        set.addPosix(posix);
+                                        set.addPosix(p);
                                         rollback = peek;
                                 }
                         }
@@ -309,32 +299,18 @@ public class Scanner{
                                 default:        
                                         throw new InvalidTokenException("Invalid token: "+ Character.toString(pattern.codePointAt(peek)));
                         }
+ 
                         if(min == "" && max != "")
-                                range = new Range(Double.POSITIVE_INFINITY, Double.parseDouble(max));
+                                range = new Range(NEGATIVE_INFINITY, Long.parseLong(max));
                         else if(min != "" && max == "")
-                                range = new Range(Double.parseDouble(min), Double.POSITIVE_INFINITY);   
-                        else range = new Range(Double.parseDouble(min), Double.parseDouble(max));
+                                range = new Range(Long.parseLong(min), POSITIVE_INFINITY);   
+                        else range = new Range(Long.parseLong(min), Long.parseLong(max));
+                        if(range.getMin() > range.getMax())
+                                throw new InvalidTokenException("Out of range");
                 }else  throw new InvalidTokenException("Invalid token: {.");
 
                 type = TokenType.RANGE;
                 return ++peek;
-        }
-
-        private boolean validPosixName(String name)
-        {
-                String [] posixNames = {"upper", "lower", "alpha", "alnum", 
-                                        "digit", "xdigit", "punct","blank",
-                                        "space", "cntrl","graph", "print", 
-                                        "^upper", "^lower",  "^alpha", "^alnum", 
-                                        "^digit", "^xdigit", "^punct", "^blank",
-                                        "^space", "^cntrl",  "^graph", "^print"};
-                boolean valid = false;
-                for (String posix : posixNames) {
-                        valid = name.equalsIgnoreCase(posix);
-                        if(valid)
-                                break;
-                }
-                return valid;
         }
 
         private boolean validEscapeSequence(int val) throws InvalidTokenException

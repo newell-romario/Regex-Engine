@@ -1,12 +1,8 @@
 {
   "java.project.sourcePaths": [
-    "src",
-    "lib/com/regex/lexical/analyzer",
-    "lib/com/regex/Parser",
-    "lib/com/regex/Exceptions",
-    "lib/com/regex/Automaton",
-    "lib/com/regex"
-  ],
+        "src",
+        "lib/com/regex"
+],
   "java.project.outputPath": "bin",
   "java.project.referencedLibraries": [
     "lib/**/*.jar"
