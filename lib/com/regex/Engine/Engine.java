@@ -5,14 +5,14 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
-import automaton.State;
+import automaton.NormalState;
 import automaton.StateType;
 import parser.Parser;
 
 public class Engine{
         private Parser parser; 
-        private State  start;
-        private State  accept;
+        private NormalState  start;
+        private NormalState  accept;
         private Submatch submatches;
         private byte [] flags;
 
@@ -64,21 +64,21 @@ public class Engine{
         public boolean match(String text)
         {
                 int pos = 0; 
-                Set<State> states = match(text, pos);
+                Set<NormalState> states = match(text, pos);
                 return states.contains(accept);
         }
 
         
-        private Set<State> match(String text, int pos)
+        private Set<NormalState> match(String text, int pos)
         {
-                Set<State> cur  = epsilonClosure(start);
-                Set<State> post = new HashSet<>();
-                State [] next   = null;
+                Set<NormalState> cur  = epsilonClosure(start);
+                Set<NormalState> post = new HashSet<>();
+                NormalState [] next   = null;
                 boolean inc     = false;
 
                 while(pos < text.length()){
                         inc = true;
-                        for(State state : cur){
+                        for(NormalState state : cur){
                                 switch(state.getStateType()){
                                         case NORMAL:
                                                 next = state.move(text.codePointAt(pos));
@@ -112,7 +112,7 @@ public class Engine{
                         
                 }
 
-                for(State state: cur){
+                for(NormalState state: cur){
                         switch(state.getStateType()){
                                 case SUBMATCH:
                                         submatches.setMatch(state.getSubMatch(), pos);
@@ -133,13 +133,13 @@ public class Engine{
                 return cur;
         }
 
-        public Set<State> epsilonClosure(State state)
+        public Set<NormalState> epsilonClosure(NormalState state)
         {
                 final int PROCESSING = 0; 
                 final int DONE = 1;
-                Deque<State> stack = new ArrayDeque<>();
-                Hashtable<State, Integer> onStack = new Hashtable<>();
-                State [] next = null;
+                Deque<NormalState> stack = new ArrayDeque<>();
+                Hashtable<NormalState, Integer> onStack = new Hashtable<>();
+                NormalState [] next = null;
                 stack.push(state);
                 onStack.put(state, PROCESSING); 
                 boolean exit;
@@ -170,6 +170,6 @@ public class Engine{
                 return new HashSet<>(onStack.keySet());
         }
 
-        public State getStart(){return start;}
+        public NormalState getStart(){return start;}
 
 }

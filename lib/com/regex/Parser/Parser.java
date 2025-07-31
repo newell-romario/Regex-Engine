@@ -1,5 +1,5 @@
 package parser;
-import automaton.State;
+import automaton.NormalState;
 import automaton.StateFactory;
 import exceptions.InvalidTokenException;
 import lexical.*;
@@ -19,10 +19,10 @@ public class Parser{
                 scanner = new Scanner(pat);
         }
 
-        public State compile() throws InvalidTokenException
+        public NormalState compile() throws InvalidTokenException
         {
-                State start = regex(flags);
-                State submatch = StateFactory.subMatch(0);
+                NormalState start = regex(flags);
+                NormalState submatch = StateFactory.subMatch(0);
                 StateFactory.join(start, submatch);
                 submatch = StateFactory.subMatch(0);; 
                 submatch = StateFactory.join(submatch, start);
@@ -32,28 +32,28 @@ public class Parser{
                 return submatch; 
         }
 
-        private State regex(byte [] flags) throws InvalidTokenException
+        private NormalState regex(byte [] flags) throws InvalidTokenException
         {
-                State start = union(flags);
+                NormalState start = union(flags);
                 return start;
         }
 
-        private State union(byte [] flags) throws InvalidTokenException
+        private NormalState union(byte [] flags) throws InvalidTokenException
         {
-                State a = concatenation(flags);
+                NormalState a = concatenation(flags);
                 token = scanner.peek();
                 if(token.getTokenType() == TokenType.ALTERNATION){
                         token = scanner.nextToken();
-                        State b = regex(flags);
+                        NormalState b = regex(flags);
                         a = StateFactory.or(a, b, flags);
                 }
                 return a;
         }
 
-        private State concatenation(byte [] flags) throws InvalidTokenException
+        private NormalState concatenation(byte [] flags) throws InvalidTokenException
         {
-                State a = basicRegex(flags);
-                State b = null;
+                NormalState a = basicRegex(flags);
+                NormalState b = null;
                 token = scanner.peek();
                 switch(token.getTokenType()){
                         case CHARACTER:
@@ -72,16 +72,16 @@ public class Parser{
                 return a;
         }
 
-        private State basicRegex(byte [] flags) throws InvalidTokenException
+        private NormalState basicRegex(byte [] flags) throws InvalidTokenException
         {
-                State state = atom(flags);
+                NormalState state = atom(flags);
                 state = quantifiers(state);
                 return state;
         }
         
-        private State atom(byte [] flags) throws InvalidTokenException
+        private NormalState atom(byte [] flags) throws InvalidTokenException
         {       
-                State start      = null;
+                NormalState start      = null;
                 CharacterClass c = null;
                 token = scanner.nextToken();
                 switch(token.getTokenType()){
@@ -114,7 +114,7 @@ public class Parser{
                 return start;
         }
 
-        private State quantifiers(State state)
+        private NormalState quantifiers(NormalState state)
         {
                 TokenType type;
                 boolean greedy = true;
@@ -156,12 +156,12 @@ public class Parser{
                 return state;  
         }
 
-        private State group(byte [] flags) throws InvalidTokenException
+        private NormalState group(byte [] flags) throws InvalidTokenException
         {
-                State start  = null;
+                NormalState start  = null;
                 boolean exit = true;
                 String f = "";
-                State submatch = null;
+                NormalState submatch = null;
             
                 /*TO DO
                  * Take care of  sub group and flags

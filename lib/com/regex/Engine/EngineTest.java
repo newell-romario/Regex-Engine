@@ -4,7 +4,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Set;
 import org.junit.Test;
-import automaton.State;
+import automaton.NormalState;
 
 public class EngineTest{
         byte [] flags = new byte[3];
@@ -14,9 +14,9 @@ public class EngineTest{
         {
                 String pattern = "foo|bar";
                 Engine engine = new Engine(pattern, flags);
-                Set<State> s = engine.epsilonClosure(engine.getStart());        
+                Set<NormalState> s = engine.epsilonClosure(engine.getStart());        
                 assertEquals(1, s.size());                
-                for(State state: s)
+                for(NormalState state: s)
                         System.out.println(state.getRegex());
         }
 
@@ -25,9 +25,9 @@ public class EngineTest{
         {
                 String pattern = "a*";
                 Engine engine  = new Engine(pattern, flags);
-                Set<State> s   = engine.epsilonClosure(engine.getStart());
+                Set<NormalState> s   = engine.epsilonClosure(engine.getStart());
                 assertEquals(1, s.size());                
-                for(State state: s)
+                for(NormalState state: s)
                         System.out.println(state.getRegex());
         }
         
@@ -37,9 +37,9 @@ public class EngineTest{
         {
                 String pattern = "a+";
                 Engine engine  = new Engine(pattern, flags);
-                Set<State> s = engine.epsilonClosure(engine.getStart());  
+                Set<NormalState> s = engine.epsilonClosure(engine.getStart());  
                 assertEquals(1, s.size());                
-                for(State state: s)
+                for(NormalState state: s)
                         System.out.println(state.getRegex());
         }
 
@@ -48,9 +48,9 @@ public class EngineTest{
         {
                 String pattern = "a?";
                 Engine engine  = new Engine(pattern, flags);
-                Set<State> s = engine.epsilonClosure(engine.getStart());  
+                Set<NormalState> s = engine.epsilonClosure(engine.getStart());  
                 assertEquals(1, s.size());                
-                for(State state: s)
+                for(NormalState state: s)
                         System.out.println(state.getRegex());
         }
 
@@ -59,9 +59,9 @@ public class EngineTest{
         {
                 String pattern = "ab";
                 Engine engine  = new Engine(pattern, flags);
-                Set<State> s = engine.epsilonClosure(engine.getStart());  
+                Set<NormalState> s = engine.epsilonClosure(engine.getStart());  
                 assertEquals(1, s.size());                
-                for(State state: s)
+                for(NormalState state: s)
                         System.out.println(state.getRegex());
         }
 
@@ -73,9 +73,9 @@ public class EngineTest{
                 int j = 0;
                 for(String pat: pattern){
                         Engine engine  = new Engine(pat, flags);
-                        Set<State> s = engine.epsilonClosure(engine.getStart()); 
+                        Set<NormalState> s = engine.epsilonClosure(engine.getStart()); 
                         assertEquals(count[j++], s.size()); 
-                        for(State state: s)
+                        for(NormalState state: s)
                                 System.out.println(state.getRegex());
                 }                
         }

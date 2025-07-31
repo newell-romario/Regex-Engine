@@ -6,7 +6,7 @@ import lexical.Escape;
 import lexical.Posix;
 import misc.IntervalTree;
 
-public class CharClassState  extends State{
+public class CharClassState  extends NormalState{
         IntervalTree members;
         ArrayList<Posix> posixes; 
         ArrayList<Escape> escapes;
@@ -29,7 +29,7 @@ public class CharClassState  extends State{
         }
 
         @Override
-        public State [] move(int val)
+        public BaseState[] move(int val)
         {
                 boolean e = false;
                 boolean p = false;
@@ -69,9 +69,9 @@ public class CharClassState  extends State{
         }
 
         @Override
-        public State copy()
+        public NormalState copy()
         {
-                State s = new CharClassState(c);
+                NormalState s = new CharClassState(c);
                 return s;  
         }
 
