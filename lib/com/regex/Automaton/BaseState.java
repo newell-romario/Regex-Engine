@@ -16,14 +16,14 @@ public class BaseState {
         int [] vals;
 
         /*Dead State*/
-        private static final NormalState [] dead = new NormalState[2];
+        private static final BaseState [] dead = new NormalState[2];
 
         public BaseState(StateType t)
         {
                 type    = t;
                 key     = System.nanoTime();
                 cid     = key;
-                next    = new NormalState[2];
+                next    = new BaseState[2];
         }
         
         public void setStateType(StateType type){this.type = type;}
@@ -35,7 +35,7 @@ public class BaseState {
         public StateType getStateType(){return type;}
         public int [] getVals(){return vals;}
         public long getCid(){return cid;}
-        public NormalState [] getDeadState(){return dead;}
+        public BaseState [] getDeadState(){return dead;}
 
 
 

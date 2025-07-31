@@ -29,15 +29,13 @@ public class StateFactory{
                 return state;
         }
 
-        public static NormalState assertion(Assertion a)
+        public static AnchorState assertion(Assertion a)
         {
-                NormalState state     = new NormalState(StateType.ANCHOR, null);
-                BaseState accept    = new NormalState(StateType.NORMAL, null);
-                NormalState [] next   = state.getStates();
+                AnchorState state   = new AnchorState(a);
+                BaseState accept    = new BaseState(StateType.BASE);
+                BaseState [] next   = state.getStates();
                 next[0] = accept;
-                state.setAssertion(a);
                 state.setAccept(accept);
-                state.setFlags(flags);
                 state.setRegex(Assertion.stringRepresentation(a));
                 return state;
         }
@@ -45,8 +43,8 @@ public class StateFactory{
         public static NormalState normal(int [] vals, byte [] flags)
         {
                 NormalState state     = new NormalState(StateType.NORMAL, vals);
-                NormalState accept    = new NormalState(StateType.NORMAL, null);
-                NormalState [] next   = state.getStates();
+                BaseState accept    = new NormalState(StateType.NORMAL, null);
+                BaseState [] next   = state.getStates();
                 next[0] = accept;
                 state.setAccept(accept);
                 state.setFlags(flags);
@@ -61,9 +59,9 @@ public class StateFactory{
         public static NormalState star(NormalState state, boolean greedy)
         {
                 NormalState start   = new NormalState(StateType.NORMAL, null);
-                NormalState accept  = new NormalState(StateType.NORMAL, null);
+                BaseState accept  = new NormalState(StateType.NORMAL, null);
                 start.setAccept(accept);
-                NormalState [] next = start.getStates();
+                BaseState [] next = start.getStates();
                 next[0] = state;
                 next[1] = accept;
                 if(!greedy){
@@ -82,10 +80,10 @@ public class StateFactory{
                 return start;
         }
 
-        public static NormalState plus(NormalState state, boolean greedy)
+        public static BaseState plus(NormalState state, boolean greedy)
         {
                 NormalState accept  = new NormalState(StateType.NORMAL, null);
-                NormalState [] next = state.getAccept().getStates();
+                BaseState [] next = state.getAccept().getStates();
                 state.setAccept(accept);
                 next[0] = state;
                 next[1] = accept;
@@ -103,7 +101,7 @@ public class StateFactory{
         public static NormalState question(NormalState state, boolean greedy)
         {
                 NormalState start = new NormalState(StateType.NORMAL, null);
-                NormalState [] next = start.getStates();
+                BaseState [] next = start.getStates();
                 next[0] = state;
                 next[1] = state.getAccept();
                 if(!greedy){
@@ -119,9 +117,9 @@ public class StateFactory{
         public static NormalState or(NormalState a, NormalState b, byte [] flags)
         {
                 NormalState start  = new NormalState(StateType.NORMAL, null);
-                NormalState accept = new NormalState(StateType.NORMAL, null); 
+                BaseState accept = new NormalState(StateType.NORMAL, null); 
                 start.setAccept(accept);
-                NormalState [] next = start.getStates();
+                BaseState [] next = start.getStates();
                 next[0] = a; 
                 next[1] = b;
                 a.getAccept().getStates()[0] = accept;
@@ -175,12 +173,12 @@ public class StateFactory{
 
         private static NormalState minToMax(NormalState [] states, boolean greedy)
         {
-                NormalState [] accepts = new NormalState[states.length-1];
+                BaseState [] accepts = new NormalState[states.length-1];
                 for(int i = 0; i < accepts.length; ++i)
                         accepts[i] = states[i].getAccept();
         
                 NormalState state   = join(states);
-                NormalState start   = new NormalState(StateType.NORMAL, null); 
+                BaseState start   = new BaseState(StateType.NORMAL); 
                 NormalState accept  = state.getAccept();
                 start.setAccept(accept);
                 start.setRegex(state.getRegex());
