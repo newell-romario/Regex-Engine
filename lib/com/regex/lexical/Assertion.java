@@ -36,4 +36,25 @@ public enum Assertion {
                 }
                 return a;
         }
+
+        public static String stringRepresentation(Assertion a)
+        {
+                switch(a){
+                        case START_OF_LINE:
+                                return "^";
+                        case END_OF_LINE:
+                                return "$";
+                        case WORD_BOUNDARY:
+                                return "\\b";
+                        case NON_WORD_BOUNDARY:
+                                return "\\B";
+                        case START_OF_FILE:
+                                return "\\A";
+                        case END_OF_FILE:
+                                return "\\Z"; 
+                        default:
+                                a = ERROR;
+                }
+                return "";
+        }
 }

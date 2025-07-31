@@ -1,5 +1,6 @@
 package lexical;
 import java.util.Hashtable;
+
 public enum Posix{
         ALNUM,
         ALPHA,

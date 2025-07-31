@@ -1,7 +1,7 @@
 {
   "java.project.sourcePaths": [
         "src",
-        "lib/com/regex"
+        "lib/com/regex",
 ],
   "java.project.outputPath": "bin",
   "java.project.referencedLibraries": [

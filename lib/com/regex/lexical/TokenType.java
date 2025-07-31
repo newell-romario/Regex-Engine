@@ -4,7 +4,6 @@ public enum TokenType {
         ALTERNATION,
         STAR,
         PLUS,
-
         QUESTION_MARK,
         LEFT_PAREN,
         RIGHT_PAREN,
@@ -26,6 +25,9 @@ public enum TokenType {
 
         /*RANGE*/
         RANGE,
+
+        /*ESCAPE*/
+        ESCAPE,
 
         /*OTHER*/
         ERROR,

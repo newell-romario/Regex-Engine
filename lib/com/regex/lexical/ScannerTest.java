@@ -6,8 +6,8 @@ import exceptions.*;
 
 public class ScannerTest {
 
-        long neg_inf = Double.doubleToLongBits(Double.NEGATIVE_INFINITY);
-        long pos_inf = Double.doubleToLongBits(Double.POSITIVE_INFINITY);
+        long NEGATIVE_INFINITY = Double.doubleToLongBits(Double.NEGATIVE_INFINITY);
+        long POSITIVE_INFINITY = Double.doubleToLongBits(Double.POSITIVE_INFINITY);
 
         @Test
         public void testOperators()
@@ -35,19 +35,26 @@ public class ScannerTest {
         @Test
         public void testCharacters()
         {
-                String alpha    = "abcdefghijklmnopqrstuvwxyz";
-                String digits   = "0123456789";
-                String symbols  = "`~@#%;'\"/<>/=_-&]";
-                String escaped  = "\\^\\.\\$\\|\\(\\)\\[\\{\\*\\+\\?";
-                String pattern = alpha + digits + symbols + escaped; 
-                Scanner scanner = new Scanner(pattern); 
-                try{
-                        Token token     = scanner.nextToken(); 
-                        while(token.getTokenType() != TokenType.EOF){
-                                assertEquals(TokenType.CHARACTER, token.getTokenType());
-                                token = scanner.nextToken(); 
-                        }   
-                }catch(InvalidTokenException e){System.err.println(e.getMessage());}
+                String alpha       = "abcdefghijklmnopqrstuvwxyz";
+                String digits      = "0123456789";
+                String symbols     = "`~@#%;'\"/<>/=_-&]";
+                String escaped     = "\\^\\.\\$\\|\\(\\)\\[\\{\\*\\+\\?";
+                String [] pattern  = {alpha, digits, symbols, escaped};
+                TokenType [] types = {TokenType.CHARACTER, TokenType.CHARACTER, TokenType.CHARACTER, TokenType.ESCAPE}; 
+                Scanner scanner; 
+                int i = 0;
+                for(String pat: pattern){
+                        scanner = new Scanner(pat); 
+                        try{
+                                Token token = scanner.nextToken(); 
+                                while(token.getTokenType() != TokenType.EOF){
+                                        assertEquals(types[i], token.getTokenType());
+                                        token = scanner.nextToken(); 
+                                }  
+                                ++i; 
+                        }catch(InvalidTokenException e){System.err.println(e.getMessage());}
+                } 
+             
         }
 
         @Test
@@ -58,7 +65,7 @@ public class ScannerTest {
                                         TokenType.BACK_REFERENCE,
                                         TokenType.CHARACTER,
                                         TokenType.CHARACTER,
-                                        TokenType.CHARACTER,
+                                        TokenType.ESCAPE,
                                         TokenType.PLUS,
                                         TokenType.EOF
                 };
@@ -87,7 +94,7 @@ public class ScannerTest {
                                 token = scanner.nextToken();
                                 assertEquals(token.getTokenType(), TokenType.RANGE);
                                 assertEquals(min[i], token.getRange().getMin());
-                                assertEquals(token.getRange().getMax(), pos_inf);
+                                assertEquals(token.getRange().getMax(), POSITIVE_INFINITY);
                         }catch(InvalidTokenException e){System.err.println(e.getMessage());}
                 }       
         }
@@ -106,7 +113,7 @@ public class ScannerTest {
                                 token = scanner.nextToken();
                                 assertEquals(token.getTokenType(), TokenType.RANGE);
                                 assertEquals(max[i], token.getRange().getMax());
-                                assertEquals(token.getRange().getMin(), neg_inf);
+                                assertEquals(token.getRange().getMin(), NEGATIVE_INFINITY);
                         }catch(InvalidTokenException e){System.err.println(e.getMessage());}
                 } 
         }

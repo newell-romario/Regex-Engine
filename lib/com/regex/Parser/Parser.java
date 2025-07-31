@@ -1,47 +1,59 @@
 package parser;
 import automaton.State;
+import automaton.StateFactory;
 import exceptions.InvalidTokenException;
 import lexical.*;
 
-public class Parser {
+public class Parser{
         private Scanner scanner;
         private Token   token;
-        private String  pattern = "";
-        private int groups = 0;
-        public Parser(String pattern)
+        private int     groups;
+        private String  pattern; 
+        private byte [] flags;
+
+        public Parser(String pat, byte [] flags)
         {
-                scanner = new Scanner(pattern);
+                this.flags = flags;
+                groups  = 1;
+                pattern = pat;
+                scanner = new Scanner(pat);
         }
 
-        public void compile() throws InvalidTokenException
+        public State compile() throws InvalidTokenException
         {
-                regex();
+                State start = regex(flags);
+                State submatch = StateFactory.subMatch(0);
+                StateFactory.join(start, submatch);
+                submatch = StateFactory.subMatch(0);; 
+                submatch = StateFactory.join(submatch, start);
                 token = scanner.nextToken(); 
-                if(token.getTokenType() != TokenType.EOF){
-                        throw new InvalidTokenException("Invalid token: " + token.toString());
-                }    
+                if(token.getTokenType() != TokenType.EOF)
+                        throw new InvalidTokenException("Invalid token: " + token.toString());  
+                return submatch; 
         }
 
-        private void regex() throws InvalidTokenException
+        private State regex(byte [] flags) throws InvalidTokenException
         {
-                union();
-                token = scanner.peek();
+                State start = union(flags);
+                return start;
         }
 
-        private void union() throws InvalidTokenException
+        private State union(byte [] flags) throws InvalidTokenException
         {
-                concatenation();
+                State a = concatenation(flags);
                 token = scanner.peek();
                 if(token.getTokenType() == TokenType.ALTERNATION){
-                        pattern+=token.toString();
                         token = scanner.nextToken();
-                        regex();
+                        State b = regex(flags);
+                        a = StateFactory.or(a, b, flags);
                 }
+                return a;
         }
 
-        private void concatenation() throws InvalidTokenException
+        private State concatenation(byte [] flags) throws InvalidTokenException
         {
-                basicRegex();
+                State a = basicRegex(flags);
+                State b = null;
                 token = scanner.peek();
                 switch(token.getTokenType()){
                         case CHARACTER:
@@ -50,109 +62,112 @@ public class Parser {
                         case CHARACTER_CLASS:
                         case BACK_REFERENCE:
                         case ASSERTIONS:
-                                concatenation();
+                        case ESCAPE:
+                              b = concatenation(flags);
+                              a = StateFactory.join(a, b);
                         break;
                         default:
                 }
+
+                return a;
         }
 
-        private void basicRegex() throws InvalidTokenException
+        private State basicRegex(byte [] flags) throws InvalidTokenException
         {
-                State state = atom();
-                quantifiers(state);
+                State state = atom(flags);
+                state = quantifiers(state);
+                return state;
         }
         
-        private State atom() throws InvalidTokenException
+        private State atom(byte [] flags) throws InvalidTokenException
         {       
-                /*Start state*/
-                State start = null;
-                CharacterClass c= null;
+                State start      = null;
+                CharacterClass c = null;
                 token = scanner.nextToken();
                 switch(token.getTokenType()){
                         case ASSERTIONS:
-                               start = StateFactory.assertion(Assertion.getType(token.getValue()));
-                               pattern += token.toString();
+                               start = StateFactory.assertion(Assertion.getType(token.getValue()), flags);
                         break;
                         case BACK_REFERENCE:
-                                if(token.getValue() > groups)
+                                if(token.getValue() > groups || token.getValue() == 0)
                                         throw new InvalidTokenException("Invalid token: invalid back reference.");
-                                pattern+="\\";
-                                pattern+=token.toString();
+                                start = StateFactory.backReference(token.getValue(), flags);
                         break;
                         case CHARACTER:
                         case COLON:
+                        case ESCAPE:
                                 int [] vals = new int[1];
-                                vals[0] = token.getValue();
-                                start = StateFactory.normal(vals);
-                                pattern+=token.toString();
+                                vals[0]     = token.getValue();
+                                start       = StateFactory.normal(vals, flags);
+                                start.setRegex(token.toString());
                         break;
                         case LEFT_PAREN:
-                                pattern+=token.toString();
-                                group();
+                                start = group(flags);
                         break;
                         case CHARACTER_CLASS:
                                 c = token.getCharacterClass();
-                                start = StateFactory.charClass(c);
-                                pattern+=token.toString();
+                                start = StateFactory.charClass(c, flags); 
                         break;
                         default:
                                 throw new InvalidTokenException("Invalid token: "+ token.toString());
                 }
-
-                /*Accept State*/
-                State accept  = StateFactory.normal(null);
-
-                /*Connect start state to accept*/
-                State [] next = start.getStates();
-                next[0] = accept;
-                start.setAccept(accept);
                 return start;
         }
 
         private State quantifiers(State state)
         {
-                try {
+                TokenType type;
+                boolean greedy = true;
+                Range range = null;
+                try{
                         token = scanner.peek();
+                        type  = token.getTokenType();
+                        range = token.getRange();
                         switch(token.getTokenType()){
                                 case STAR:
-                                        state = StateFactory.star(state);
-                                        token = scanner.nextToken();
-                                        pattern+=token.toString();
-                                break;
                                 case QUESTION_MARK:
-                                        state = StateFactory.question(state);
-                                        pattern+=token.toString();
-                                        token = scanner.nextToken();
-                                break;
                                 case PLUS:
-                                        state = StateFactory.plus(state); 
-                                        pattern+=token.toString();
+                                case RANGE:  
                                         token = scanner.nextToken();
-                                break;
-                                case RANGE:
-                                        pattern+=token.toString();
-                                        token = scanner.nextToken();
+                                        token = scanner.peek();
+                                        if(token.getTokenType() == TokenType.QUESTION_MARK){
+                                                greedy = false;
+                                                token  = scanner.nextToken();
+                                        }else{
+                                                byte [] flags = state.getFlags();
+                                                if(flags != null){
+                                                        for(byte flag: flags){
+                                                                /**
+                                                                 * If the state has the ungreedy flag set
+                                                                 * then quantifier should be ungreedy as well.
+                                                                 */
+                                                                if(flag == 'U')
+                                                                        greedy = false;
+                                                        }
+                                                }
+                                        }
+                                        state = StateFactory.quantifier(state, type, range, greedy);
                                 break;
                                 default:
                                 break;
                         }  
                         
                 }catch(Exception e){System.err.println(e.getMessage());}
-                
                 return state;  
         }
 
-        private void group() throws InvalidTokenException
+        private State group(byte [] flags) throws InvalidTokenException
         {
+                State start  = null;
                 boolean exit = true;
-                String flags = "";
-                ++groups;
+                String f = "";
+                State submatch = null;
+            
                 /*TO DO
                  * Take care of  sub group and flags
                  */
                 token = scanner.peek();
                 if(token.getTokenType() == TokenType.QUESTION_MARK){
-                        pattern+=token.toString();
                         token = scanner.nextToken();
                         token = scanner.peek();
                         if(token.getTokenType() == TokenType.CHARACTER){
@@ -161,56 +176,62 @@ public class Parser {
                                         token = scanner.nextToken();
                                         switch(token.getValue()){
                                                 case 'i':
-                                                case 'm':
                                                 case 's':
                                                 case 'U':
-                                                        flags+=token.toString();
+                                                        f+=token.toString();
                                                 break;
                                                 default:
                                                         exit = false;
                                         }
                                 }
-                                if("imsU".indexOf(token.getValue()) == -1
+                                if("isU".indexOf(token.getValue()) == -1
                                 && token.getTokenType() != TokenType.COLON 
                                 && token.getTokenType() != TokenType.RIGHT_PAREN)
-                                        throw new InvalidTokenException("Invalid token: unknow flag.");
-                                pattern+= flags;
-
+                                        throw new InvalidTokenException("Invalid token: unknown flag.");
+                                
                                 if(token.getTokenType() == TokenType.COLON){
                                         /*Turn off non capturing*/
-                                        pattern+=token.toString();
-                                        regex();
+                                        start = regex(f.getBytes());
+                                        start.setRegex("(?" + f + ":" + start.getRegex() + ")");
                                         token = scanner.nextToken();
                                         if(token.getTokenType() != TokenType.RIGHT_PAREN)
                                                 throw new InvalidTokenException("Invalid token: missing ).");
-                                                /*take care of group */
-                                                pattern+=token.toString();
-
                                 }else if(token.getTokenType() == TokenType.RIGHT_PAREN){
-                                        /*take care of group */
-                                        pattern+=token.toString();
+                                        start = regex(f.getBytes());
+                                        start.setRegex("(?" + f + ")" + start.getRegex());
                                 }else 
-                                        throw new InvalidTokenException("Invalid token: unknow flag.");
+                                        throw new InvalidTokenException("Invalid token: unknown flag.");
                         }else if(token.getTokenType() == TokenType.COLON){
-                                pattern+=token.toString();
+                                /*Turn off submatching*/
                                 token = scanner.nextToken();
-                                regex();
+                                start  = regex(flags);
+                                start.setRegex("(" + start.getRegex() + ")");
+                                token = scanner.nextToken();
                                 if(token.getTokenType() != TokenType.RIGHT_PAREN)
                                         throw new InvalidTokenException("Invalid token: missing ).");
-                                /*take care of group */
-                                pattern+=token.toString();
-                        }else throw new InvalidTokenException("Invalid token: unknow flag.");
+                                
+                        }else throw new InvalidTokenException("Invalid token: unknown flag.");
                 }else{
-                        regex();
+                        int pos =  groups++;
+                        /*Creating submatch start*/
+                        
+                        submatch = StateFactory.subMatch(pos);
+                        submatch.setRegex("(");
+                        start = regex(flags);
                         token = scanner.nextToken();
                         if(token.getTokenType() != TokenType.RIGHT_PAREN)
                                 throw new InvalidTokenException("Invalid token: missing ).");
-                        pattern+=token.toString();
+                                
+                        start = StateFactory.join(submatch, start);
+                        /*Create submatch ending*/
+                        submatch = StateFactory.subMatch(pos);
+                        submatch.setRegex(")");
+                        start = StateFactory.join(start, submatch);
+                        
                 }
+                return start;
         }
 
         public String getPattern(){return pattern;}
-
-
-
+        public int getGroups(){return groups;}
 }

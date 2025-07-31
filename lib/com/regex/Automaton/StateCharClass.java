@@ -1,5 +1,4 @@
 package automaton;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import lexical.CharacterClass;
@@ -45,9 +44,21 @@ public class StateCharClass  extends State{
                 
                 m = members.getRanges(val).size() > 0;
                 int [] vals = super.getVals();
-                v =  vals[Arrays.binarySearch(vals, val)] == val;
-        
-
+                if(vals != null && vals.length != 0){
+                        byte [] flags = super.getFlags();
+                        if(flags != null){
+                                if(flags[0] == 'i'){
+                                        val = Character.toLowerCase(val);
+                                        for(int i = 0; i < vals.length; ++i){
+                                                vals[i] = Character.toLowerCase(vals[i]);
+                                        }    
+                                }
+                        }
+                        int loc = Arrays.binarySearch(vals, val);
+                        if(loc >= 0)
+                                v =  vals[loc] == val;
+                }
+                        
                 boolean t = m || e || p || v;
                 if(negated)
                         t = !t;

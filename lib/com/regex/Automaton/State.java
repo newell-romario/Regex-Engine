@@ -1,4 +1,5 @@
 package automaton;
+import static org.junit.Assert.assertEquals;
 import java.util.Arrays;
 import lexical.Assertion;
 import lexical.Posix;
@@ -27,10 +28,8 @@ public class State{
         /*Stores the  accept state*/
         private State accept;
 
-
         /*Next states*/
         private State []  next;
-
         
         /*State type*/
         private StateType type;
@@ -41,8 +40,11 @@ public class State{
         /*Dead State*/
         private static final State [] dead = new State[2];
 
-        /*Submatch number */
+        /*Submatch number*/
         private int submatch;
+
+
+
 
         public State(StateType t, int [] v)
         {
@@ -51,7 +53,7 @@ public class State{
                 key     = System.nanoTime();
                 cid     = key;
                 regex   = "";
-                flags   = new byte[4]; 
+                flags   = null; 
                 accept  = null;
                 next    = new State[2];
         }
@@ -74,29 +76,44 @@ public class State{
         public Assertion getAssertion(){return anchor;}
         public int [] getVals(){return vals;}
         public long getCid(){return cid;}
-        protected State [] getDeadState(){return dead;}
+        public State [] getDeadState(){return dead;}
 
 
         public void setFlags(byte [] f)
         {
                 if(flags == null)
                         return;
-                
-                for(int i = 0; i < f.length; ++i)
-                        flags[i] = f[i];
+                assertEquals(f.length, 3);
+                String fString = "isU";
+                for(int i = 0; i < f.length; ++i){
+                        if(fString.indexOf(f[i]) != -1)
+                                flags[i] = f[i];
+                }          
         }
 
+        public State [] move()
+        {
+                if(vals == null)
+                        return next;
+                return dead;
+        }
         
         public State [] move(int val)
         {
-                if(vals != null){                               
-                        if(vals[0] == val)
-                                return next;
-                }
+                if(flags != null){
+                        if(flags[0] == 'i'){
+                                vals[0] = Character.toLowerCase(vals[0]);
+                                val     = Character.toLowerCase(val);
+                        }
+                }                           
+                if(vals != null && vals[0] == val)
+                        return next;
+                
          
                 return dead;
         }
 
+        
         public State [] assertion(String pattern, int pos)
         {
                 switch(anchor){
@@ -157,7 +174,7 @@ public class State{
         {
                 State s = new State(type, vals == null?null: Arrays.copyOf(vals, vals.length));
                 s.setRegex(regex);
-                s.setFlags(Arrays.copyOf(flags, flags.length));
+                s.setFlags(flags);
                 s.setAssertion(anchor);
                 s.setAccept(accept);
                 s.setSubMatch(submatch);
@@ -174,7 +191,6 @@ public class State{
                 int result = Long.hashCode(key);
                 result = 31*result + type.hashCode();
                 result = 31*result + next.hashCode();
-                result = 31*result + flags.hashCode();
                 return result;
         }
 

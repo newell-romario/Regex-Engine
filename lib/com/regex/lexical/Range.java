@@ -3,6 +3,7 @@ package lexical;
 public class Range{
         private long min;
         private long max;
+        private String rep;
         public Range(long min, long max)
         {     
                 this.min = min;
@@ -14,20 +15,8 @@ public class Range{
 
         public long getMin(){return min;}
         public long getMax(){return max;}
-        
+        public void setRep(String r){ rep = r;}
+
         @Override
-        public String toString()
-        {
-                String rep = "{"; 
-                if(min == max)
-                        rep+=(int)max+"}";
-                else{
-                        String smin = "";
-                        String smax = "";
-                        smin += min == Double.doubleToLongBits(min)? "" : min;
-                        smax += max == Double.doubleToLongBits(max)? "" : max; 
-                        rep+=smin+","+smax+"}";
-                }       
-                return rep; 
-        }
+        public String toString(){return rep; }
 }

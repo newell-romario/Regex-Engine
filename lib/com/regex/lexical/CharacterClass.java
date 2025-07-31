@@ -8,7 +8,7 @@ public class CharacterClass{
         private ArrayList<Integer> set;/*all characters in the set*/
         private ArrayList<Posix>   posix; /*enum representation*/
         private ArrayList<Escape>  escape;/*enum representation of escape*/
-        private boolean negate;
+        private boolean negate; /*represents the character class is negated*/
 
         public CharacterClass()
         {
@@ -46,8 +46,6 @@ public class CharacterClass{
                 if(set.indexOf(elem) == -1)
                         set.add(elem);
         }
-
-
 
         public void setRepresentation(String s){rep = s;}
         public void negate(){negate = !negate;}

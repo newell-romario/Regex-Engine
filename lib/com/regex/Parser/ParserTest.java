@@ -1,6 +1,7 @@
 package parser;
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
+import automaton.State;
 import exceptions.*;
 
 public class ParserTest {
@@ -18,13 +19,19 @@ public class ParserTest {
                                 "^\\([^()]*\\)$|^\\([^()]*\\([^()]*\\)[^()]*\\)$",
                                 "(^foo$)|(^bar$)", 
                                 "^foo$|^bar$",
-                                "a(?i:hello)b"
+                                "a(?i:hello)b",
+                                "<([[:alpha:]]+)([[:space:]]+[[:alnum:]-]+(=\"[^\"]*\")?)*>.*<\\/\\1>",
+                                "([[:alpha:]]-?[[:alpha:]]+)=\"([^\"]*)\"[^>]*\\>.*<\\/\\1\\>",
+                                "a{0,0}",
+                                "a{0,1}",
+                                "a{0,5}"
                         };
+                
                 for(String pattern : patterns){
-                        Parser parser = new Parser(pattern); 
+                        Parser parser = new Parser(pattern, null); 
                         try{
-                                parser.compile();
-                                assertEquals(pattern, parser.getPattern());
+                                State state =  parser.compile();
+                                assertEquals(state.getRegex(), pattern);
                                 System.out.println(pattern);
                         }catch(InvalidTokenException e){
                                 System.err.println(e.getMessage());

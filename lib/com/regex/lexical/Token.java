@@ -18,8 +18,9 @@ public class Token {
         public CharacterClass getCharacterClass(){return set;}
         public Range getRange(){return range;}
         public int getValue()
-        {       if(type == TokenType.BACK_REFERENCE)
+        {       if(type == TokenType.BACK_REFERENCE || type == TokenType.ESCAPE)
                         return values[1];
+                
                 return values[0];
         }
         
