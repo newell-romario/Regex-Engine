@@ -1,5 +1,4 @@
 package automaton;
-import static org.junit.Assert.assertEquals;
 import java.util.Arrays;
 import lexical.Assertion;
 import lexical.Posix;
@@ -16,7 +15,6 @@ public class State{
 
         /*We can set flags for regex such as:
          * i - case-insensitive
-         * m - multi-line
          * s - match \n
          * U - ungreedy
         */
@@ -42,9 +40,6 @@ public class State{
 
         /*Submatch number*/
         private int submatch;
-
-
-
 
         public State(StateType t, int [] v)
         {
@@ -80,10 +75,7 @@ public class State{
 
 
         public void setFlags(byte [] f)
-        {
-                if(flags == null)
-                        return;
-                assertEquals(f.length, 3);
+        {    
                 String fString = "isU";
                 for(int i = 0; i < f.length; ++i){
                         if(fString.indexOf(f[i]) != -1)
