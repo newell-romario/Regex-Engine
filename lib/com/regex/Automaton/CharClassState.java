@@ -6,14 +6,14 @@ import lexical.Escape;
 import lexical.Posix;
 import misc.IntervalTree;
 
-public class StateCharClass  extends State{
+public class CharClassState  extends State{
         IntervalTree members;
         ArrayList<Posix> posixes; 
         ArrayList<Escape> escapes;
         boolean negated;
         CharacterClass c;
 
-        public StateCharClass(CharacterClass c)
+        public CharClassState(CharacterClass c)
         {
                 c.compactSet();
                 int [] vals = new int[c.getSet().size()];
@@ -71,7 +71,7 @@ public class StateCharClass  extends State{
         @Override
         public State copy()
         {
-                State s = new StateCharClass(c);
+                State s = new CharClassState(c);
                 return s;  
         }
 

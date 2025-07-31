@@ -16,7 +16,6 @@ public class State{
 
         /*We can set flags for regex such as:
          * i - case-insensitive
-         * m - multi-line
          * s - match \n
          * U - ungreedy
         */
@@ -42,8 +41,6 @@ public class State{
 
         /*Submatch number*/
         private int submatch;
-
-
 
 
         public State(StateType t, int [] v)

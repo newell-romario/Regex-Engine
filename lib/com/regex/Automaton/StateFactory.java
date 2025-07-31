@@ -19,7 +19,7 @@ public class StateFactory{
                                 c.addMembers('\r');
                         }
                 }
-                State state     = new StateCharClass(c);
+                State state     = new CharClassState(c);
                 State accept    = new State(StateType.NORMAL, null);
                 State [] next   = state.getStates();
                 next[0] = accept;
