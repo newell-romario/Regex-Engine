@@ -103,6 +103,7 @@ public class BaseState {
 
         protected void setBase(BaseState base)
         {
+                type   = base.getStateType();
                 regex  = base.getRegex();
                 accept = base.getAccept();
                 cid    = base.getCid();

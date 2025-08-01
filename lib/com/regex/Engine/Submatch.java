@@ -22,5 +22,7 @@ public class Submatch{
                         return match;
                 }
 
-                public int [][] getMatches(){return matches;}                
+                public int [][] getMatches(){return matches;}   
+                
+                public int[] getMatches(int group){return matches[group];}
 }

@@ -2,6 +2,7 @@ package Engine;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import automaton.BackReferenceState;
 import automaton.BaseState;
 import automaton.SubMatchState;
 
@@ -12,9 +13,6 @@ public class BackTracking extends Engine{
                 super(pattern, flags);
         }
 
-
-
-        
         @Override
         public boolean match(String text)
         {                
@@ -26,12 +24,14 @@ public class BackTracking extends Engine{
                 BaseState [] next = null;
                 Configuration config = null;
                 int pos = 0;
+                BaseState [] dead = cur.getDeadState();
                 do{
                         switch(cur.getStateType()){
                                 case NORMAL:
                                         if(pos < text.length()){
                                                 next = cur.move(text.codePointAt(pos));
-                                                ++pos;
+                                                if(next != dead)
+                                                        ++pos;
                                         }else next = cur.move();
                                 break;
                                 case BASE:
@@ -54,10 +54,21 @@ public class BackTracking extends Engine{
                                         config = new Configuration(pos, next[1], getSubmatches().copy());
                                         stack.push(config);
                                 break;
+                                case BACK_REFERENCE:
+                                        BackReferenceState ref = (BackReferenceState) cur;
+                                        int [] m = super.getSubmatches().getMatches(ref.getGroup());
+                                        String t = text.substring(m[0], m[1]);
+                                        if(pos < text.length() && t.equals(text.substring(pos, pos+t.length()))){
+                                                next = ref.getStates();
+                                                pos = pos + t.length();
+                                        }else if(pos == text.length())
+                                                next = ref.getStates();
+                                        else next = dead;
+                                break;
                                 default:
                         }
 
-                        if(next != cur.getDeadState())
+                        if(next != dead)
                                 cur = next[0]; 
                         else{
                                 if(!stack.isEmpty()){
@@ -70,8 +81,9 @@ public class BackTracking extends Engine{
                         if(cur == accept && pos == text.length())
                                 break;
                 }while(cur != null);
-                 
-                storeMatches(text);
+                
+                if(cur == accept)
+                        storeMatches(text);
                 return cur == accept; 
         }
 
@@ -86,13 +98,14 @@ public class BackTracking extends Engine{
                 BaseState accept  = super.getAccept();
                 BaseState [] next = null;
                 Configuration config = null;
-                int start = pos;
+                BaseState [] dead = cur.getDeadState();
                 do{
                         switch(cur.getStateType()){
                                 case NORMAL:
                                         if(pos < text.length()){
                                                 next = cur.move(text.codePointAt(pos));
-                                                ++pos;
+                                                if(next != dead)
+                                                        ++pos;
                                         }else next = cur.move();
                                 break;
                                 case BASE:
@@ -115,12 +128,24 @@ public class BackTracking extends Engine{
                                         config = new Configuration(pos, next[1], getSubmatches().copy());
                                         stack.push(config);
                                 break;
+                                case BACK_REFERENCE:
+                                        BackReferenceState ref = (BackReferenceState) cur;
+                                        int [] m = super.getSubmatches().getMatches(ref.getGroup());
+                                        String t = text.substring(m[0], m[1]);
+                                        if(pos < text.length() && t.equals(text.substring(pos, pos+t.length()))){
+                                                next = ref.getStates();
+                                                pos = pos + t.length();
+                                        }else if(pos == text.length())
+                                                next = ref.getStates();
+                                        else next = dead;      
+                                break;
                                 default:
+                                break;
                         }
                         
                         if(cur == accept)
                                 break;
-                        if(next != cur.getDeadState())
+                        if(next != dead)
                                 cur = next[0]; 
                         else{
                                 if(!stack.isEmpty()){
@@ -132,11 +157,11 @@ public class BackTracking extends Engine{
                         }
                         if(cur == accept && pos == text.length())
                                 break;
-                       
                 }while(cur != null);
 
                 
-                storeMatches(text);
+                if(cur == accept)
+                        storeMatches(text);
                 return pos;               
         }
 
@@ -145,8 +170,12 @@ public class BackTracking extends Engine{
         {
                 ArrayList<String> matches = new ArrayList<>();
                 super.setMatch(matches);
-                for(int pos = 0; pos < text.length();){
-                        pos = match(text, pos); 
+                int cur = 0;
+                for(int pos = 0; pos < text.length()+1;){
+                        cur = match(text, pos);
+                        if(pos == cur)
+                                ++pos;
+                        else pos = cur; 
                 }
 
                 return matches;

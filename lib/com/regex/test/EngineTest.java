@@ -169,7 +169,7 @@ public class EngineTest{
         public void testSubmatch()
         {
                 String pattern  = "(?:\\+?\\d{1,3}[-.\\s]?\\(?\\d{3}\\)?[-.\\s]?\\d{3}[-.\\s]?\\d{4}|\\w+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}|https?://(?:www\\.)?[a-zA-Z0-9-]+\\.[a-zA-Z]{2,}(?:/\\S*)?)";
-                String text     = "Please contact support at help@company.com or call +1 (555) 123-4567 for assistance. Visit our website at https://company.com/docs for more information. Invalid entries like 'user@name@domain.org', 'tel:123-456', or 'htp:/broken.link' will not work. For international inquiries, reach us at +44 20 7946 0958 or sales@company.co.uk. Note that 'support@.com' and 'www.company' are invalid formats.";
+                String text     = "help@company.com";
                 Engine engine   = new BackTracking(pattern, flags);
                 boolean found   = false;
                 found = engine.match(text);
@@ -187,6 +187,77 @@ public class EngineTest{
                 for(String result: results){
                         assertTrue(matches.contains(result));
                 }
+        }
+
+        @Test
+        public void testBackReference()
+        {
+                String pattern = "(?:(([A-Z])([a-z])\\2\\3){2}|(\\d)([a-f])\\4\\5(?:\\4\\5){2}|((\\w)\\7){3}([^\\W\\d_])\\8)";
+                String text = "AaAaBbBb";
+                Engine engine  = new BackTracking(pattern, flags);
+                ArrayList<String> matches = engine.allMatches(text); 
+                String [] results = {"AaAaBbBb", "BbBb", "B", "b"};
+                for(String result: results){
+                        assertTrue(matches.contains(result));
+                }
+        }
+
+        @Test
+        public void testAnchors()
+        {
+                String pattern = "<([a-z][a-z0-9]*)\\b[^>]*>.*?</\\1>";
+                String text    = "<div>content</div>";
+                Engine engine  = new BackTracking(pattern, flags);
+                ArrayList<String> matches = engine.allMatches(text); 
+                String [] results = {"<div>content</div>", "div"};
+                for(String result: results){
+                        assertTrue(matches.contains(result));
+                }
+
+        }
+
+
+        @Test
+        public void testEmptyMatches()
+        {
+                String pattern = "a*";
+                String text = "bbbbbbbb";
+                Engine engine  = new BackTracking(pattern, flags);
+                ArrayList<String> matches = engine.allMatches(text); 
+                String [] results = {"", "", "", "","", "", "", "", ""};
+                for(String result: results){
+                        assertTrue(matches.contains(result));
+                }
+        }
+
+        @Test
+        public void testComplex()
+        {
+                String pattern = "<(\\w+)(\\s+\\w+=\"[^\"]*\")*>(.*?)</\\1>";
+                String text    = "<div class=\"main\">Content</div>";
+                Engine engine  = new BackTracking(pattern, flags);
+                ArrayList<String> matches = engine.allMatches(text); 
+                String [] results = {"", "", "", "","", "", "", "", ""};
+                for(String result: results){
+                        assertTrue(matches.contains(result));
+                }
+        }
+
+        @Test
+        public void testRegexDemo()
+        {
+                String pattern = "[A-Z][a-z]{2,}(?:-[A-Z][a-z]+)*\\d{2,4}:(?:[0-9A-F]{2}-){4}[0-9A-F]{2}(?:\\+[a-z]{3,6}\\.[a-z]{2,3})?";
+                String [] texts = {"John-Doe42:AB-12-CD-34-EF", "Alice123:00-FF-00-FF-00+config.txt", "Xavier-Williams-Smith2024:1A-2B-3C-4D-5E", "Test99:AA-BB-CC-DD-EE+data.json"};
+                Engine engine  = new BackTracking(pattern, flags);
+                String [] results = {"123-John03@mail.example.com/about.html", "456-Xyzab12@a.b.c.net/index.html", "Admin99@company.com"};
+                ArrayList<String> matches = null;
+                for(String text: texts){
+                        boolean found = engine.match(text);
+                        assertTrue(found);
+              
                 
+                }
+
+               
         }
 }

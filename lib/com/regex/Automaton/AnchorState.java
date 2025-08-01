@@ -29,7 +29,7 @@ public class AnchorState extends BaseState{
                                         return super.getStates();
                                 return super.getDeadState();
                         case WORD_BOUNDARY:
-                                if(pos-1 == 0 && Posix.asciiIsWord(text.charAt(pos)))
+                                if(pos-1 < 0 && Posix.asciiIsWord(text.charAt(pos)))
                                         return super.getStates();
                                 if(pos+1 == text.length() && Posix.asciiIsWord(text.charAt(pos)))
                                         return super.getStates();
@@ -43,7 +43,7 @@ public class AnchorState extends BaseState{
                                                 return super.getStates();
                                 return super.getDeadState();
                         case NON_WORD_BOUNDARY:
-                                if(!(pos-1 == 0 && Posix.asciiIsWord(text.charAt(pos))))
+                                if(!(pos-1 < 0 && Posix.asciiIsWord(text.charAt(pos))))
                                         return super.getStates();
                                 if(!(pos+1 == text.length() && Posix.asciiIsWord(text.charAt(pos))))
                                         return super.getStates();

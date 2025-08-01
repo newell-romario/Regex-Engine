@@ -89,13 +89,15 @@ public abstract class Engine{
         protected byte []   getFlags(){return flags;}
         protected void setMatch(int group,  int index, int pos){submatches.setMatch(group, index, pos);}
         protected void setMatch(ArrayList<String> matches){this.matches = matches;}
+        protected ArrayList<String> getMatches(){return matches;}
         protected void storeMatches(String text)
         {
                 int [][] m = submatches.getMatches();
                 for(int i = 0; i < m.length;++i){
                                 if(m[i][0] <  m[i][1])
-                                matches.add(text.substring(m[i][0], m[i][1]));
+                                        matches.add(text.substring(m[i][0], m[i][1]));
+                                else if (m[i][0] ==  m[i][1])
+                                        matches.add(new String());           
                 }
-
         }
 }

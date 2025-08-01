@@ -1,4 +1,7 @@
 package parser;
+import java.util.ArrayList;
+
+import automaton.BackReferenceState;
 import automaton.BaseState;
 import automaton.StateFactory;
 import automaton.StateType;
@@ -11,20 +14,22 @@ public class Parser{
         private int     groups;
         private String  pattern; 
         private byte [] flags;
-
+        private ArrayList<BackReferenceState> references = new ArrayList<>();
+        
         public Parser(String pat, byte [] flags)
         {
                 this.flags = flags;
                 groups  = 1;
                 pattern = pat;
                 scanner = new Scanner(pat);
+                
         }
 
         public BaseState compile() throws InvalidTokenException
         {
                 BaseState start = regex(flags);
                 BaseState submatch = StateFactory.subMatch(0, StateType.SUBMATCH_END, 1);
-                StateFactory.join(start, submatch);
+                start = StateFactory.join(start, submatch);
                 submatch = StateFactory.subMatch(0, StateType.SUBMATCH_START, 0); 
                 submatch = StateFactory.join(submatch, start);
                 token = scanner.nextToken(); 
@@ -92,7 +97,7 @@ public class Parser{
                         case BACK_REFERENCE:
                                 if(token.getValue() > groups || token.getValue() == 0)
                                         throw new InvalidTokenException("Invalid token: invalid back reference.");
-                                start = StateFactory.backReference(null,null,token.getValue());
+                                start = references.get(token.getValue()-1);
                         break;
                         case CHARACTER:
                         case COLON:
@@ -163,10 +168,7 @@ public class Parser{
                 boolean exit = true;
                 String f = "";
                 BaseState submatch = null;
-            
-                /*TO DO
-                 * Take care of  sub group and flags
-                 */
+
                 token = scanner.peek();
                 if(token.getTokenType() == TokenType.QUESTION_MARK){
                         token = scanner.nextToken();
@@ -191,7 +193,7 @@ public class Parser{
                                         throw new InvalidTokenException("Invalid token: unknown flag.");
                                 
                                 if(token.getTokenType() == TokenType.COLON){
-                                        /*Turn off non capturing*/
+                                        /*Turn off sub matching*/
                                         start = regex(f.getBytes());
                                         start.setRegex("(?" + f + ":" + start.getRegex() + ")");
                                         token = scanner.nextToken();
@@ -203,6 +205,7 @@ public class Parser{
                                 }else 
                                         throw new InvalidTokenException("Invalid token: unknown flag.");
                         }else if(token.getTokenType() == TokenType.COLON){
+                                
                                 /*Turn off submatching*/
                                 token = scanner.nextToken();
                                 start  = regex(flags);
@@ -210,12 +213,11 @@ public class Parser{
                                 token = scanner.nextToken();
                                 if(token.getTokenType() != TokenType.RIGHT_PAREN)
                                         throw new InvalidTokenException("Invalid token: missing ).");
-                                
                         }else throw new InvalidTokenException("Invalid token: unknown flag.");
                 }else{
                         int pos =  groups++;
                         /*Creating submatch start*/
-                        
+                        references.add(StateFactory.backReference(null, null, pos));
                         submatch = StateFactory.subMatch(pos, StateType.SUBMATCH_START, 0);
                         submatch.setRegex("(");
                         start = regex(flags);
@@ -229,7 +231,9 @@ public class Parser{
                         submatch.setRegex(")");
                         submatch.setStateType(StateType.SUBMATCH_END);
                         start = StateFactory.join(start, submatch);
-                        
+                        BackReferenceState ref = references.get(pos-1);
+                        ref.setStart(start);
+                        ref.setEnd(start.getAccept());
                 }
                 return start;
         }
