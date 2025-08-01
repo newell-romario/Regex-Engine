@@ -1,6 +1,7 @@
 package parser;
-import automaton.NormalState;
+import automaton.BaseState;
 import automaton.StateFactory;
+import automaton.StateType;
 import exceptions.InvalidTokenException;
 import lexical.*;
 
@@ -19,12 +20,12 @@ public class Parser{
                 scanner = new Scanner(pat);
         }
 
-        public NormalState compile() throws InvalidTokenException
+        public BaseState compile() throws InvalidTokenException
         {
-                NormalState start = regex(flags);
-                NormalState submatch = StateFactory.subMatch(0);
+                BaseState start = regex(flags);
+                BaseState submatch = StateFactory.subMatch(0, StateType.SUBMATCH_END, 1);
                 StateFactory.join(start, submatch);
-                submatch = StateFactory.subMatch(0);; 
+                submatch = StateFactory.subMatch(0, StateType.SUBMATCH_START, 0); 
                 submatch = StateFactory.join(submatch, start);
                 token = scanner.nextToken(); 
                 if(token.getTokenType() != TokenType.EOF)
@@ -32,28 +33,28 @@ public class Parser{
                 return submatch; 
         }
 
-        private NormalState regex(byte [] flags) throws InvalidTokenException
+        private BaseState regex(byte [] flags) throws InvalidTokenException
         {
-                NormalState start = union(flags);
+                BaseState start = union(flags);
                 return start;
         }
 
-        private NormalState union(byte [] flags) throws InvalidTokenException
+        private BaseState union(byte [] flags) throws InvalidTokenException
         {
-                NormalState a = concatenation(flags);
+                BaseState a = concatenation(flags);
                 token = scanner.peek();
                 if(token.getTokenType() == TokenType.ALTERNATION){
                         token = scanner.nextToken();
-                        NormalState b = regex(flags);
-                        a = StateFactory.or(a, b, flags);
+                        BaseState b = regex(flags);
+                        a = StateFactory.or(a, b);
                 }
                 return a;
         }
 
-        private NormalState concatenation(byte [] flags) throws InvalidTokenException
+        private BaseState concatenation(byte [] flags) throws InvalidTokenException
         {
-                NormalState a = basicRegex(flags);
-                NormalState b = null;
+                BaseState a = basicRegex(flags);
+                BaseState b = null;
                 token = scanner.peek();
                 switch(token.getTokenType()){
                         case CHARACTER:
@@ -72,26 +73,26 @@ public class Parser{
                 return a;
         }
 
-        private NormalState basicRegex(byte [] flags) throws InvalidTokenException
+        private BaseState basicRegex(byte [] flags) throws InvalidTokenException
         {
-                NormalState state = atom(flags);
+                BaseState state = atom(flags);
                 state = quantifiers(state);
                 return state;
         }
         
-        private NormalState atom(byte [] flags) throws InvalidTokenException
+        private BaseState atom(byte [] flags) throws InvalidTokenException
         {       
-                NormalState start      = null;
+                BaseState start  = null;
                 CharacterClass c = null;
                 token = scanner.nextToken();
                 switch(token.getTokenType()){
                         case ASSERTIONS:
-                               start = StateFactory.assertion(Assertion.getType(token.getValue()), flags);
+                               start = StateFactory.assertion(Assertion.getType(token.getValue()));
                         break;
                         case BACK_REFERENCE:
                                 if(token.getValue() > groups || token.getValue() == 0)
                                         throw new InvalidTokenException("Invalid token: invalid back reference.");
-                                start = StateFactory.backReference(token.getValue(), flags);
+                                start = StateFactory.backReference(null,null,token.getValue());
                         break;
                         case CHARACTER:
                         case COLON:
@@ -114,7 +115,7 @@ public class Parser{
                 return start;
         }
 
-        private NormalState quantifiers(NormalState state)
+        private BaseState quantifiers(BaseState state)
         {
                 TokenType type;
                 boolean greedy = true;
@@ -156,12 +157,12 @@ public class Parser{
                 return state;  
         }
 
-        private NormalState group(byte [] flags) throws InvalidTokenException
+        private BaseState group(byte [] flags) throws InvalidTokenException
         {
-                NormalState start  = null;
+                BaseState start  = null;
                 boolean exit = true;
                 String f = "";
-                NormalState submatch = null;
+                BaseState submatch = null;
             
                 /*TO DO
                  * Take care of  sub group and flags
@@ -215,7 +216,7 @@ public class Parser{
                         int pos =  groups++;
                         /*Creating submatch start*/
                         
-                        submatch = StateFactory.subMatch(pos);
+                        submatch = StateFactory.subMatch(pos, StateType.SUBMATCH_START, 0);
                         submatch.setRegex("(");
                         start = regex(flags);
                         token = scanner.nextToken();
@@ -224,8 +225,9 @@ public class Parser{
                                 
                         start = StateFactory.join(submatch, start);
                         /*Create submatch ending*/
-                        submatch = StateFactory.subMatch(pos);
+                        submatch = StateFactory.subMatch(pos, StateType.SUBMATCH_END, 1);
                         submatch.setRegex(")");
+                        submatch.setStateType(StateType.SUBMATCH_END);
                         start = StateFactory.join(start, submatch);
                         
                 }

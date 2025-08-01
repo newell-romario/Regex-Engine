@@ -1,4 +1,4 @@
-package misc;
+package test;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
@@ -6,6 +6,7 @@ import java.util.Random;
 
 import org.junit.Test;
 import lexical.Range;
+import misc.IntervalTree;
 public class IntervalTreeTest {
 
         @Test

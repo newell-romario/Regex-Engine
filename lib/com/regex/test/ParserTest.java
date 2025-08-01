@@ -1,8 +1,9 @@
-package parser;
+package test;
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
-import automaton.NormalState;
+import automaton.BaseState;
 import exceptions.*;
+import parser.Parser;
 
 public class ParserTest {
         @Test
@@ -30,7 +31,7 @@ public class ParserTest {
                 for(String pattern : patterns){
                         Parser parser = new Parser(pattern, null); 
                         try{
-                                NormalState state =  parser.compile();
+                                BaseState state =  parser.compile();
                                 assertEquals(state.getRegex(), pattern);
                                 System.out.println(pattern);
                         }catch(InvalidTokenException e){

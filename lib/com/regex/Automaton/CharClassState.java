@@ -19,7 +19,7 @@ public class CharClassState  extends NormalState{
                 int [] vals = new int[c.getSet().size()];
                 for(int i = 0; i < vals.length;++i)
                         vals[i] = c.getSet().get(i);
-                super(StateType.CHARACTER_CLASS, vals);
+                super(vals);
                
                 members = new IntervalTree(c.getRanges());
                 posixes = c.getPosix();
@@ -27,6 +27,9 @@ public class CharClassState  extends NormalState{
                 negated = c.isNegated();
                 this.c = c;
         }
+
+        @Override
+        public BaseState [] move(){return super.getDeadState();}
 
         @Override
         public BaseState[] move(int val)
@@ -69,9 +72,10 @@ public class CharClassState  extends NormalState{
         }
 
         @Override
-        public NormalState copy()
+        public CharClassState copy()
         {
-                NormalState s = new CharClassState(c);
+                CharClassState s = new CharClassState(c);
+                s.setBase(this);
                 return s;  
         }
 

@@ -349,6 +349,7 @@ public class Scanner{
                                 case ',':
                                         ++peek; 
                                         start = peek;
+                                        
                                         /*Reading the maximum */
                                         while(peek < pattern.length() && Character.isDigit(pattern.codePointAt(peek)))
                                                 ++peek;

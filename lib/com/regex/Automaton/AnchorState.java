@@ -2,53 +2,58 @@ package automaton;
 import lexical.Assertion;
 import lexical.Posix;
 
-public class AnchorState extends NormalState{
+public class AnchorState extends BaseState{
         private Assertion anchor;
+        
         public AnchorState(Assertion assertion)
         {
-                super(StateType.ANCHOR, null);
+                super(StateType.ANCHOR);
                 anchor = assertion;
         }
+        
+        @Override
+        public BaseState [] move(){return super.getDeadState();}
 
-        public BaseState [] assertion(String pattern, int pos)
+        @Override
+        public BaseState [] move(String text, int pos)
         {
                 switch(anchor){
                         case START_OF_LINE:
-                                if(pos == 0 || pattern.charAt(pos-1) == '\n' || pattern.charAt(pos-1) == '\r')
+                                if(pos == 0 || text.charAt(pos-1) == '\n' || text.charAt(pos-1) == '\r')
                                         return super.getStates();  
                                 return super.getDeadState();
                         case END_OF_LINE:
-                                if(pos == pattern.length())
+                                if(pos == text.length())
                                         return super.getStates();
-                                if(pattern.charAt(pos) == '\n' || pattern.charAt(pos) == '\r')
+                                if(text.charAt(pos) == '\n' || text.charAt(pos) == '\r')
                                         return super.getStates();
                                 return super.getDeadState();
                         case WORD_BOUNDARY:
-                                if(pos-1 == 0 && Posix.asciiIsWord(pattern.charAt(pos)))
+                                if(pos-1 == 0 && Posix.asciiIsWord(text.charAt(pos)))
                                         return super.getStates();
-                                if(pos+1 == pattern.length() && Posix.asciiIsWord(pattern.charAt(pos)))
+                                if(pos+1 == text.length() && Posix.asciiIsWord(text.charAt(pos)))
                                         return super.getStates();
-                                if(!Posix.asciiIsWord(pattern.charAt(pos)))
-                                        if(pos+1 < pattern.length() &&
-                                         Posix.asciiIsWord(pattern.charAt(pos+1)))
+                                if(!Posix.asciiIsWord(text.charAt(pos)))
+                                        if(pos+1 < text.length() &&
+                                         Posix.asciiIsWord(text.charAt(pos+1)))
                                                 return super.getStates();
-                                if(Posix.asciiIsWord(pattern.charAt(pos)))
-                                        if(pos+1 < pattern.length() &&
-                                                !Posix.asciiIsWord(pattern.charAt(pos+1)))
+                                if(Posix.asciiIsWord(text.charAt(pos)))
+                                        if(pos+1 < text.length() &&
+                                                !Posix.asciiIsWord(text.charAt(pos+1)))
                                                 return super.getStates();
                                 return super.getDeadState();
                         case NON_WORD_BOUNDARY:
-                                if(!(pos-1 == 0 && Posix.asciiIsWord(pattern.charAt(pos))))
+                                if(!(pos-1 == 0 && Posix.asciiIsWord(text.charAt(pos))))
                                         return super.getStates();
-                                if(!(pos+1 == pattern.length() && Posix.asciiIsWord(pattern.charAt(pos))))
+                                if(!(pos+1 == text.length() && Posix.asciiIsWord(text.charAt(pos))))
                                         return super.getStates();
-                                if(Posix.asciiIsWord(pattern.charAt(pos)))
-                                        if(!(pos+1 < pattern.length() &&
-                                         Posix.asciiIsWord(pattern.charAt(pos+1))))
+                                if(Posix.asciiIsWord(text.charAt(pos)))
+                                        if(!(pos+1 < text.length() &&
+                                         Posix.asciiIsWord(text.charAt(pos+1))))
                                                 return super.getStates();
-                                if(!Posix.asciiIsWord(pattern.charAt(pos)))
-                                        if(!(pos+1 < pattern.length() &&
-                                                !Posix.asciiIsWord(pattern.charAt(pos+1))))
+                                if(!Posix.asciiIsWord(text.charAt(pos)))
+                                        if(!(pos+1 < text.length() &&
+                                                !Posix.asciiIsWord(text.charAt(pos+1))))
                                                 return super.getStates();
                         return super.getDeadState();
                         case START_OF_FILE:
@@ -56,7 +61,7 @@ public class AnchorState extends NormalState{
                                         return super.getStates();
                                 return super.getDeadState();
                         case END_OF_FILE:
-                                if(pos == pattern.length())
+                                if(pos == text.length())
                                         return super.getStates();
                                 return super.getDeadState();
                         default:
@@ -64,4 +69,22 @@ public class AnchorState extends NormalState{
                 }
                 return super.getDeadState();
         }
+
+        @Override
+        public int hashCode()
+        {
+                int result = super.hashCode();
+                result = 31*result + anchor.hashCode();
+                return result;
+        }
+
+        @Override
+        public AnchorState copy()
+        {
+                AnchorState a = new AnchorState(anchor);
+                a.setBase(this);
+                return a;
+        }
+
+
 }

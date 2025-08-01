@@ -2,16 +2,27 @@ package automaton;
 
 public class SubMatchState extends BaseState{ 
         private int group;
-        private String regex;
+        private int index;
 
-        public SubMatchState(int id)
+        public SubMatchState(int id, int index)
         {
-                super(StateType.SUBMATCH);
+                super(StateType.BASE);
                 group = id;
+                this.index = index;
         }
+
         
+        
+        public BaseState [] move(){return super.getDeadState();}
         public int getGroup(){return group;}
+        public int getIndex(){return index;}
         public void setGroup(int id){group = id;}
-        public String getRegex(){return regex;}
-        public void   setRegex(String r){regex = r;}
+
+        @Override
+        public SubMatchState copy()
+        {
+                SubMatchState sub = new SubMatchState(group, index);
+                sub.setBase(this);
+                return sub;
+        }
 }

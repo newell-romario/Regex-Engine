@@ -1,10 +1,14 @@
-package Engine;
+package test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.util.ArrayList;
 import java.util.Set;
 import org.junit.Test;
-import automaton.NormalState;
+
+import Engine.BackTracking;
+import Engine.Engine;
+import automaton.BaseState;
 
 public class EngineTest{
         byte [] flags = new byte[3];
@@ -13,21 +17,21 @@ public class EngineTest{
         public void testEpsilonClosureOr()
         {
                 String pattern = "foo|bar";
-                Engine engine = new Engine(pattern, flags);
-                Set<NormalState> s = engine.epsilonClosure(engine.getStart());        
+                Engine engine  = new BackTracking(pattern, flags);
+                Set<BaseState> s = engine.eClosure(engine.getStart());        
                 assertEquals(1, s.size());                
-                for(NormalState state: s)
+                for(BaseState state: s)
                         System.out.println(state.getRegex());
         }
 
         @Test
         public void testEpsilonClosureStar()
         {
-                String pattern = "a*";
-                Engine engine  = new Engine(pattern, flags);
-                Set<NormalState> s   = engine.epsilonClosure(engine.getStart());
+                String pattern     = "a*";
+                Engine engine      = new BackTracking(pattern, flags);
+                Set<BaseState> s   = engine.eClosure(engine.getStart());
                 assertEquals(1, s.size());                
-                for(NormalState state: s)
+                for(BaseState state: s)
                         System.out.println(state.getRegex());
         }
         
@@ -36,10 +40,10 @@ public class EngineTest{
         public void testEpsilonPlus()
         {
                 String pattern = "a+";
-                Engine engine  = new Engine(pattern, flags);
-                Set<NormalState> s = engine.epsilonClosure(engine.getStart());  
+                Engine engine  = new BackTracking(pattern, flags);
+                Set<BaseState> s = engine.eClosure(engine.getStart());  
                 assertEquals(1, s.size());                
-                for(NormalState state: s)
+                for(BaseState state: s)
                         System.out.println(state.getRegex());
         }
 
@@ -47,10 +51,10 @@ public class EngineTest{
         public void testEpsilonQuestion()
         {
                 String pattern = "a?";
-                Engine engine  = new Engine(pattern, flags);
-                Set<NormalState> s = engine.epsilonClosure(engine.getStart());  
+                Engine engine  = new BackTracking(pattern, flags);
+                Set<BaseState> s = engine.eClosure(engine.getStart());  
                 assertEquals(1, s.size());                
-                for(NormalState state: s)
+                for(BaseState state: s)
                         System.out.println(state.getRegex());
         }
 
@@ -58,10 +62,10 @@ public class EngineTest{
         public void testEpsilonConcatenation()
         {
                 String pattern = "ab";
-                Engine engine  = new Engine(pattern, flags);
-                Set<NormalState> s = engine.epsilonClosure(engine.getStart());  
+                Engine engine  = new BackTracking(pattern, flags);
+                Set<BaseState> s = engine.eClosure(engine.getStart());  
                 assertEquals(1, s.size());                
-                for(NormalState state: s)
+                for(BaseState state: s)
                         System.out.println(state.getRegex());
         }
 
@@ -72,10 +76,10 @@ public class EngineTest{
                 int [] count = {1, 1, 1, 1};
                 int j = 0;
                 for(String pat: pattern){
-                        Engine engine  = new Engine(pat, flags);
-                        Set<NormalState> s = engine.epsilonClosure(engine.getStart()); 
+                        Engine engine  = new BackTracking(pat, flags);
+                        Set<BaseState> s = engine.eClosure(engine.getStart()); 
                         assertEquals(count[j++], s.size()); 
-                        for(NormalState state: s)
+                        for(BaseState state: s)
                                 System.out.println(state.getRegex());
                 }                
         }
@@ -89,7 +93,7 @@ public class EngineTest{
                 boolean [] found  = {true, false};
                 Engine engine;
                 for(int i = 0; i < text.length; ++i){
-                        engine = new Engine(pattern, flags);
+                        engine = new BackTracking(pattern, flags);
                         assertEquals(Boolean.valueOf(engine.match(text[i])), Boolean.valueOf(found[i]));
                 }
         }
@@ -97,12 +101,12 @@ public class EngineTest{
         @Test
         public void testMatchStar()
         {
-                String pattern  = "a*b";
-                String [] text     = {"aaaaaab", "aaaaaaaa"};
+                String pattern    = "a*b";
+                String [] text    = {"aaaaaab", "aaaaaaaa"};
                 boolean [] found  = {true, false};
                 Engine engine;
                 for(int i = 0; i < text.length;++i){
-                        engine = new Engine(pattern, flags);
+                        engine = new BackTracking(pattern, flags);
                         assertEquals(Boolean.valueOf(engine.match(text[i])), Boolean.valueOf(found[i]));
                 }
         }
@@ -115,7 +119,7 @@ public class EngineTest{
                 boolean [] found  = {true, false};
                 Engine engine;
                 for(int i = 0; i < text.length;++i){
-                        engine = new Engine(pattern, flags);
+                        engine = new BackTracking(pattern, flags);
                         assertEquals(Boolean.valueOf(engine.match(text[i])), Boolean.valueOf(found[i]));
                 }
         }
@@ -128,7 +132,7 @@ public class EngineTest{
                 boolean [] found = {true, true, false};
                 Engine engine;
                 for(int i = 0; i < text.length;++i){
-                        engine = new Engine(pattern, flags);
+                        engine = new BackTracking(pattern, flags);
                         assertEquals(Boolean.valueOf(engine.match(text[i])), Boolean.valueOf(found[i]));
                 }
         }
@@ -141,7 +145,7 @@ public class EngineTest{
                 boolean [] found = {true, true, true, true, true, true, true, true, false};
                 Engine engine; 
                 for(int i = 0; i < text.length;++i){
-                        engine = new Engine(pattern, flags);
+                        engine = new BackTracking(pattern, flags);
                         assertEquals(Boolean.valueOf(engine.match(Character.toString(text[i]))), 
                         Boolean.valueOf(found[i]));
                 }
@@ -156,7 +160,7 @@ public class EngineTest{
                 boolean [] found  = {true, true, true, true, true, false};
                 Engine engine;
                 for(int i = 0; i < text.length;++i){
-                        engine = new Engine(pattern[i], flags);
+                        engine = new BackTracking(pattern[i], flags);
                         assertEquals(Boolean.valueOf(engine.match(text[i])), Boolean.valueOf(found[i]));
                 }
         }
@@ -164,15 +168,25 @@ public class EngineTest{
         @Test
         public void testSubmatch()
         {
-               String pattern  = "(ab)+";
-               String text     = "ababc";
-                
-               
-                //String pattern  = "[[:digit:]]{2,4}-(0[1-9]|1[0-2])-(0[1-9]|[12][[:digit:]]|3[01])";
-                //String text = "2024-05-15";
-                Engine engine   = new Engine(pattern, flags);
+                String pattern  = "(?:\\+?\\d{1,3}[-.\\s]?\\(?\\d{3}\\)?[-.\\s]?\\d{3}[-.\\s]?\\d{4}|\\w+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}|https?://(?:www\\.)?[a-zA-Z0-9-]+\\.[a-zA-Z]{2,}(?:/\\S*)?)";
+                String text     = "Please contact support at help@company.com or call +1 (555) 123-4567 for assistance. Visit our website at https://company.com/docs for more information. Invalid entries like 'user@name@domain.org', 'tel:123-456', or 'htp:/broken.link' will not work. For international inquiries, reach us at +44 20 7946 0958 or sales@company.co.uk. Note that 'support@.com' and 'www.company' are invalid formats.";
+                Engine engine   = new BackTracking(pattern, flags);
                 boolean found   = false;
                 found = engine.match(text);
                 assertTrue(found);
+        }
+
+        @Test
+        public void testAllMatch()
+        {
+                String pattern  = "(?:\\+?\\d{1,3}[-.\\s]?\\(?\\d{3}\\)?[-.\\s]?\\d{3}[-.\\s]?\\d{4}|\\w+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}|https?://(?:www\\.)?[a-zA-Z0-9-]+\\.[a-zA-Z]{2,}(?:/\\S*)?)"; 
+                String text     = "Please contact support at help@company.com or call +1 (555) 123-4567 for assistance. Visit our website at https://company.com/docs for more information. Invalid entries like 'user@name@domain.org', 'tel:123-456', or 'htp:/broken.link' will not work. For international inquiries, reach us at +44 20 7946 0958 or sales@company.co.uk. Note that 'support@.com' and 'www.company' are invalid formats.";
+                Engine engine   = new BackTracking(pattern, flags);
+                ArrayList<String> matches = engine.allMatches(text);
+                String [] results = {"help@company.com", "+1 (555) 123-4567", "https://company.com/docs",  "sales@company.co.uk", "name@domain.org"};
+                for(String result: results){
+                        assertTrue(matches.contains(result));
+                }
+                
         }
 }
