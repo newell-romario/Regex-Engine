@@ -180,8 +180,12 @@ public class Scanner{
                         TokenType.LEFT_PAREN, TokenType.RIGHT_PAREN, 
                         TokenType.ASSERTIONS, TokenType.COLON
                 };
-                type      = types[temp.indexOf(pattern.codePointAt(peek))];
-                values[0] = pattern.codePointAt(peek); 
+                
+                type = types[temp.indexOf(pattern.codePointAt(peek))];
+                if(type != TokenType.ASSERTIONS)
+                        values[0] = pattern.codePointAt(peek); 
+                else 
+                        values[1] = pattern.codePointAt(peek); 
                 return ++peek;
         }
 

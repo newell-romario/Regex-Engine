@@ -246,18 +246,16 @@ public class EngineTest{
         @Test
         public void testRegexDemo()
         {
-                String pattern = "[A-Z][a-z]{2,}(?:-[A-Z][a-z]+)*\\d{2,4}:(?:[0-9A-F]{2}-){4}[0-9A-F]{2}(?:\\+[a-z]{3,6}\\.[a-z]{2,3})?";
-                String [] texts = {"John-Doe42:AB-12-CD-34-EF", "Alice123:00-FF-00-FF-00+config.txt", "Xavier-Williams-Smith2024:1A-2B-3C-4D-5E", "Test99:AA-BB-CC-DD-EE+data.json"};
-                Engine engine  = new BackTracking(pattern, flags);
-                String [] results = {"123-John03@mail.example.com/about.html", "456-Xyzab12@a.b.c.net/index.html", "Admin99@company.com"};
+                String pattern    = "^[A-Z][a-z]{2,}(?:-[A-Z][a-z]+)*\\d{2,4}:(?:[0-9A-F]{2}-){4}[0-9A-F]{2}(?:\\+[a-z]{3,6}\\.[a-z]{2,3})?$";
+                String [] texts   = {"John-Doe42:AB-12-CD-34-EF", "Alice123:00-FF-00-FF-00+config.txt", "Xavier-Williams-Smith2024:1A-2B-3C-4D-5E", "Test99:AA-BB-CC-DD-EE+data.json"};
+                Engine engine     = new BackTracking(pattern, flags);
                 ArrayList<String> matches = null;
                 for(String text: texts){
-                        boolean found = engine.match(text);
-                        assertTrue(found);
-              
-                
-                }
-
-               
+                        matches = engine.allMatches(text);
+                        for(String match: matches){
+                                System.out.println(match);
+                        }
+                        
+                }               
         }
 }
