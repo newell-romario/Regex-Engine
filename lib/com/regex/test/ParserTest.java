@@ -28,8 +28,9 @@ public class ParserTest {
                                 "a{0,5}"
                         };
                 
+                byte [] flags = new byte[3];
                 for(String pattern : patterns){
-                        Parser parser = new Parser(pattern, null); 
+                        Parser parser = new Parser(pattern, flags); 
                         try{
                                 BaseState state =  parser.compile();
                                 assertEquals(state.getRegex(), pattern);
