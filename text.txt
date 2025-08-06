@@ -1,0 +1,36 @@
+# Test Data for Complex Regex Pattern
+
+# Valid matches
+
+Abc123XY
+Zyx987AB$xyz
+Hello456CD#12
+Short999GH%x
+
+# Near matches (should fail)
+abc123XY              # lowercase first letter
+Abc12XY               # only 2 digits
+Abcdef12345XY         # too many letters before digits
+Abc123XYZ             # 3 letters after digits
+Abc123XY@             # special char but no following chars
+Abc123XY@abcde        # too many chars after special char
+Abc123XY!test         # invalid special char
+Abc123XY              # no special char (this is actually valid)
+Abc123X               # only 1 letter after digits
+
+# Completely invalid cases
+123AbcXY
+ABCdef123GH
+Abc-def123IJ
+Abc123XY@ test        # contains space
+Abc123XY@test test2   # contains space
+Abc123XY@test\test    # contains backslash
+Empty string: ""
+Just random text
+Special@chars#only$here
+
+# Edge cases
+Aaa999ZZ              # minimal valid
+Aaaaaa999ZZ           # maximal letters before digits
+Aaaaa999ZZ@zzzz       # maximal chars after special char
+Aaa999ZZ@1            # minimal chars after special char

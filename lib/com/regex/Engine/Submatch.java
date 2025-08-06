@@ -7,6 +7,10 @@ public class Submatch{
                 {
                         groups  = num;       
                         matches = new int[groups][2];
+                        for(int i = 0; i < matches.length; ++i){
+                                for(int j = 0; j < matches[i].length; ++j)
+                                        matches[i][j] = -1;
+                        }
                 }
                 
                 public void setMatch(int group, int index, int pos){matches[group][index] = pos;}
@@ -25,4 +29,6 @@ public class Submatch{
                 public int [][] getMatches(){return matches;}   
                 
                 public int[] getMatches(int group){return matches[group];}
+
+                public int getGroup(){return groups;}
 }

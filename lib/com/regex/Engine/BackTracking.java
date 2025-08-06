@@ -16,8 +16,9 @@ public class BackTracking extends Engine{
         @Override
         public boolean match(String text)
         {                
-                ArrayList<String> matches = new ArrayList<>();
+                ArrayList<Match>   matches = new ArrayList<>();
                 super.setMatch(matches);
+                setSubmatch(new Submatch(super.getSubmatches().getGroup()));
                 ArrayDeque<Configuration>stack = new ArrayDeque<>();
                 BaseState cur     = super.getStart();
                 BaseState accept  = super.getAccept();
@@ -83,7 +84,7 @@ public class BackTracking extends Engine{
                 }while(cur != null);
                 
                 if(cur == accept)
-                        storeMatches(text);
+                        matches.add(new Match(getSubmatches(), text));
                 return cur == accept; 
         }
 
@@ -93,6 +94,7 @@ public class BackTracking extends Engine{
         @Override
         public int match(String text, int pos)
         {
+                setSubmatch(new Submatch(super.getSubmatches().getGroup()));
                 ArrayDeque<Configuration>stack = new ArrayDeque<>();
                 BaseState cur     = super.getStart();
                 BaseState accept  = super.getAccept();
@@ -103,6 +105,7 @@ public class BackTracking extends Engine{
                         switch(cur.getStateType()){
                                 case NORMAL:
                                         if(pos < text.length()){
+                                                
                                                 next = cur.move(text.codePointAt(pos));
                                                 if(next != dead)
                                                         ++pos;
@@ -155,20 +158,18 @@ public class BackTracking extends Engine{
                                         setSubmatch(config.matches);
                                 }else cur = null;
                         }
-                        if(cur == accept && pos == text.length())
-                                break;
                 }while(cur != null);
 
                 
                 if(cur == accept)
-                        storeMatches(text);
+                        super.getMatches().add(new Match(getSubmatches(), text));
                 return pos;               
         }
 
         @Override
-        public ArrayList<String> allMatches(String text)
+        public ArrayList<Match> allMatches(String text)
         {
-                ArrayList<String> matches = new ArrayList<>();
+                ArrayList<Match> matches = new ArrayList<>();
                 super.setMatch(matches);
                 int cur = 0;
                 for(int pos = 0; pos < text.length()+1;){

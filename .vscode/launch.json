@@ -3,9 +3,9 @@
   "configurations": [
         {
                 "type": "java",
-                "name": "RegexEngine",
+                "name": "Driver",
                 "request": "launch",
-                "mainClass": "RegexEngine",
+                "mainClass": "Driver",
                 "projectName": "Regex Engine_97fcf679"
         },
         {

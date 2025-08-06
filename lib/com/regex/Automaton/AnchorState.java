@@ -19,7 +19,7 @@ public class AnchorState extends BaseState{
         {
                 switch(anchor){
                         case START_OF_LINE:
-                                if(pos == 0 || text.charAt(pos-1) == '\n' || text.charAt(pos-1) == '\r')
+                                if(pos-1 < 0  || text.charAt(pos-1) == '\n' || text.charAt(pos-1) == '\r')
                                         return super.getStates();  
                                 return super.getDeadState();
                         case END_OF_LINE:

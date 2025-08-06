@@ -187,25 +187,27 @@ public class Parser{
                                                         exit = false;
                                         }
                                 }
-                                if("isU".indexOf(token.getValue()) == -1
+                                if("isU".indexOf(token.getValue()) == -1 && f.length() > 3 
                                 && token.getTokenType() != TokenType.COLON 
                                 && token.getTokenType() != TokenType.RIGHT_PAREN)
                                         throw new InvalidTokenException("Invalid token: unknown flag.");
-                                
+                                byte [] g = new byte[flags.length];
+                                g[0] = (f.contains("i") == true? 1: flags[0]);
+                                g[1] = (f.contains("s") == true? 1: flags[1]);
+                                g[2] = (f.contains("U") == true? 1: flags[2]);
                                 if(token.getTokenType() == TokenType.COLON){
                                         /*Turn off sub matching*/
-                                        start = regex(f.getBytes());
+                                        start = regex(g);
                                         start.setRegex("(?" + f + ":" + start.getRegex() + ")");
                                         token = scanner.nextToken();
                                         if(token.getTokenType() != TokenType.RIGHT_PAREN)
                                                 throw new InvalidTokenException("Invalid token: missing ).");
                                 }else if(token.getTokenType() == TokenType.RIGHT_PAREN){
-                                        start = regex(f.getBytes());
+                                        start = regex(g);
                                         start.setRegex("(?" + f + ")" + start.getRegex());
                                 }else 
                                         throw new InvalidTokenException("Invalid token: unknown flag.");
                         }else if(token.getTokenType() == TokenType.COLON){
-                                
                                 /*Turn off submatching*/
                                 token = scanner.nextToken();
                                 start  = regex(flags);
