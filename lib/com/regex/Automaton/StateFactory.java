@@ -11,17 +11,19 @@ public class StateFactory{
         private static final long POSITIVE_INFINITY = Double.doubleToLongBits(Double.POSITIVE_INFINITY);
         private static final long NEGATIVE_INFINITY = Double.doubleToLongBits(Double.NEGATIVE_INFINITY);
         
-        public static State charClass(CharacterClass c, byte [] flags)
+        public static NormalState charClass(CharacterClass c, byte [] flags)
         {
                 if(flags != null){
-                        if(c.isNegated()){
+                        if(c.isNegated() && flags[1] != 'm'){
+                                /*Don't match newline when negated*/
                                 c.addMembers('\n');
                                 c.addMembers('\r');
                         }
                 }
-                State state     = new StateCharClass(c);
-                State accept    = new State(StateType.NORMAL, null);
-                State [] next   = state.getStates();
+
+                NormalState state  = new CharClassState(c);
+                BaseState   accept = new BaseState(StateType.BASE);
+                BaseState [] next  = state.getStates();
                 next[0] = accept;
                 state.setAccept(accept);
                 state.setFlags(flags);
@@ -29,47 +31,44 @@ public class StateFactory{
                 return state;
         }
 
-        public static State assertion(Assertion a, byte [] flags)
+        public static AnchorState assertion(Assertion a)
         {
-                State state     = new State(StateType.ANCHOR, null);
-                State accept    = new State(StateType.NORMAL, null);
-                State [] next   = state.getStates();
+                AnchorState state   = new AnchorState(a);
+                BaseState accept    = new BaseState(StateType.BASE);
+                BaseState [] next   = state.getStates();
                 next[0] = accept;
-                state.setAssertion(a);
                 state.setAccept(accept);
-                state.setFlags(flags);
                 state.setRegex(Assertion.stringRepresentation(a));
                 return state;
         }
 
-        public static State normal(int [] vals, byte [] flags)
+        public static NormalState normal(int [] vals, byte [] flags)
         {
-                State state     = new State(StateType.NORMAL, vals);
-                State accept    = new State(StateType.NORMAL, null);
-                State [] next   = state.getStates();
+                NormalState state   = new NormalState(vals);
+                BaseState accept    = new BaseState(StateType.BASE);
+                BaseState [] next   = state.getStates();
                 next[0] = accept;
                 state.setAccept(accept);
                 state.setFlags(flags);
                 String rep = ""; 
-                if(vals != null)
-                        for(int val: vals)
-                                rep += Character.toString(val);
+                rep += Character.toString(vals[0]);
                 state.setRegex(rep);
                 return state;
         }
 
-        public static State star(State state, boolean greedy)
+        public static BaseState star(BaseState state, boolean greedy)
         {
-                State start   = new State(StateType.NORMAL, null);
-                State accept  = new State(StateType.NORMAL, null);
+                BaseState start  = new BaseState(StateType.STAR);
+                BaseState accept = new BaseState(StateType.BASE);
                 start.setAccept(accept);
-                State [] next = start.getStates();
+                BaseState [] next = start.getStates();
                 next[0] = state;
                 next[1] = accept;
                 if(!greedy){
                         next[0] = accept;
                         next[1] = state;
                 }
+                state.getAccept().setStateType(StateType.STAR);
                 next = state.getAccept().getStates();
                 next[0] = state;
                 next[1] = accept;
@@ -82,28 +81,21 @@ public class StateFactory{
                 return start;
         }
 
-        public static State plus(State state, boolean greedy)
+        public static BaseState plus(BaseState state, boolean greedy)
         {
-                State accept  = new State(StateType.NORMAL, null);
-                State [] next = state.getAccept().getStates();
-                state.setAccept(accept);
-                next[0] = state;
-                next[1] = accept;
-                if(!greedy){
-                        next[0] = accept;
-                        next[1] = state;
-                }
-              
-                String rep = state.getRegex() +"+"+ (greedy == false? "?": "");
+                String regex = state.getRegex();
+                BaseState star  = StateFactory.star(duplicate(state), greedy);
+                state = StateFactory.join(state, star);
+                String rep = regex +"+"+ (greedy == false? "?": "");
                 state.setRegex(rep);
                 return state;
         }
 
 
-        public static State question(State state, boolean greedy)
+        public static BaseState question(BaseState state, boolean greedy)
         {
-                State start = new State(StateType.NORMAL, null);
-                State [] next = start.getStates();
+                BaseState start   = new BaseState(StateType.QUESTION);
+                BaseState [] next = start.getStates();
                 next[0] = state;
                 next[1] = state.getAccept();
                 if(!greedy){
@@ -116,12 +108,12 @@ public class StateFactory{
                 return start;
         }
 
-        public static State or(State a, State b, byte [] flags)
+        public static BaseState or(BaseState a, BaseState b)
         {
-                State start  = new State(StateType.NORMAL, null);
-                State accept = new State(StateType.NORMAL, null); 
+                BaseState start   = new BaseState(StateType.ALTERNATION);
+                BaseState accept  = new BaseState(StateType.BASE); 
                 start.setAccept(accept);
-                State [] next = start.getStates();
+                BaseState [] next = start.getStates();
                 next[0] = a; 
                 next[1] = b;
                 a.getAccept().getStates()[0] = accept;
@@ -131,13 +123,14 @@ public class StateFactory{
         }
 
 
-        public static State range(State state, Range range, boolean greedy)
+        public static BaseState range(BaseState state, Range range, boolean greedy)
         {
-                State [] min = null;
-                State [] max = null;
-                String regex = state.getRegex();
-                State start  = null;
-                State copy = duplicate(state);
+                BaseState [] min = null;
+                BaseState [] max = null;
+                String regex     = state.getRegex();
+                BaseState start  = null;
+                BaseState copy   = duplicate(state);
+                
                 if(range.getMin() == range.getMax()){
                         min   = duplicate(state, range.getMin()-1);
                         start = join(state, join(min));
@@ -157,7 +150,7 @@ public class StateFactory{
                                 start = join(state, join(min));
                         }
 
-                        State star = star(copy, greedy);
+                        BaseState star = star(copy, greedy);
                         if(!greedy)
                                 star.setRegex(star.getRegex().substring(0, star.getRegex().length()-2));
                         else
@@ -173,18 +166,18 @@ public class StateFactory{
                 return start;
         }
 
-        private static State minToMax(State [] states, boolean greedy)
+        private static BaseState minToMax(BaseState [] states, boolean greedy)
         {
-                State [] accepts = new State[states.length-1];
+                BaseState [] accepts = new BaseState[states.length-1];
                 for(int i = 0; i < accepts.length; ++i)
                         accepts[i] = states[i].getAccept();
         
-                State state   = join(states);
-                State start   = new State(StateType.NORMAL, null); 
-                State accept  = state.getAccept();
+                BaseState state   = join(states);
+                BaseState start   = new BaseState(StateType.RANGE); 
+                BaseState accept  = state.getAccept();
                 start.setAccept(accept);
                 start.setRegex(state.getRegex());
-                State [] next = start.getStates();
+                BaseState [] next = start.getStates();
                 next[0] = state;
                 next[1] = accept;
                 if(!greedy){
@@ -192,7 +185,8 @@ public class StateFactory{
                         next[1] = state;
                 }
                 
-                for(State a : accepts){
+                for(BaseState a : accepts){
+                        a.setStateType(StateType.RANGE);
                         next    = a.getStates();
                         next[1] = accept;
                         if(!greedy){
@@ -204,16 +198,16 @@ public class StateFactory{
         }
         
      
-        public static State join(State a, State b)
+        public static BaseState join(BaseState a, BaseState b)
         {
-                State [] next = a.getAccept().getStates();
+                BaseState [] next = a.getAccept().getStates();
                 next[0] = b;
                 a.setAccept(b.getAccept());
                 a.setRegex(a.getRegex()+b.getRegex());
                 return a;
         }
 
-        public static State join(State [] b)
+        public static BaseState join(BaseState [] b)
         {
                 for(int num = b.length-2; num >= 0; --num){
                         b[num] = join(b[num], b[num+1]);
@@ -222,25 +216,25 @@ public class StateFactory{
         }
 
 
-        private static State [] duplicate(State state, long num)
+        private static BaseState [] duplicate(BaseState state, long num)
         {
-                State [] copies = new State[(int)num];
+                BaseState [] copies = new BaseState[(int)num];
                 for(int i = 0; i < num; ++i)
                         copies[i] = duplicate(state);
                 
                 return copies;
         }
 
-        public static State duplicate(State state)
+        public static BaseState duplicate(BaseState state)
         {
                 final byte PROCESSING  = 0;
                 final byte FINISHED    = 1;
-                Deque<State> stack  = new ArrayDeque<>();
-                Hashtable<State, State>copies = new Hashtable<>();
-                Hashtable<State, Byte> onStack = new Hashtable<>();
-                State [] children = null;
-                State [] next = null;
-                State copy = state.copy();
+                Deque<BaseState> stack  = new ArrayDeque<>();
+                Hashtable<BaseState, BaseState>copies = new Hashtable<>();
+                Hashtable<BaseState, Byte> onStack = new Hashtable<>();
+                BaseState [] children = null;
+                BaseState [] next = null;
+                BaseState copy = state.copy();
                 stack.push(state);
                 copies.put(state, copy);
                 onStack.put(state, PROCESSING);
@@ -275,7 +269,7 @@ public class StateFactory{
                 return copy;
         }
 
-        public static State quantifier(State state, TokenType type, Range range, boolean greedy) throws Exception
+        public static BaseState quantifier(BaseState state, TokenType type, Range range, boolean greedy) throws Exception
         {
                 switch(type){
                         case STAR:
@@ -291,7 +285,7 @@ public class StateFactory{
                                 if(range.getMin() == 1 && range.getMax() == 1){
                                      state.setRegex(state.getRegex()+range);   
                                 }else if(range.getMin() == 0 && range.getMax() == 0){
-                                        State start = new State(StateType.NORMAL, null);
+                                        BaseState start = new BaseState(StateType.BASE);
                                         start.getStates()[0] = state.getAccept();
                                         start.setAccept(state.getAccept());
                                         start.setRegex(state.getRegex()+range+ (greedy == false? "?": ""));
@@ -313,24 +307,24 @@ public class StateFactory{
                 return state; 
         }
 
-        public static State subMatch(int group)
+        public static SubMatchState subMatch(int group, StateType type, int index)
         {
-                State start  = new State(StateType.SUBMATCH, null);
-                State accept = new State(StateType.NORMAL,null);
+                SubMatchState start  = new SubMatchState(group, index);
+                BaseState accept     = new BaseState(StateType.BASE);
+                start.setStateType(type);
                 start.setAccept(accept);
                 start.getStates()[0] = accept;
-                start.setSubMatch(group);
                 return start;
         }
 
-        public static State backReference(int group, byte [] flags)
+        public static BackReferenceState backReference(BaseState start, BaseState end,int group)
         {
-                State start  = new State(StateType.BACK_REFERENCE, null);
-                State accept = new State(StateType.NORMAL,null);
-                start.setAccept(accept);
-                start.getStates()[0] = accept;
-                start.setSubMatch(group);
-                start.setRegex("\\"+group);
-                return start;
+                BackReferenceState state  = new BackReferenceState(start, end, group);
+                BaseState accept = new BaseState(StateType.BASE);
+                state.setStateType(StateType.BACK_REFERENCE);
+                state.setAccept(accept);
+                state.getStates()[0] = accept;
+                state.setRegex("\\"+group);
+                return state;
         }
 }

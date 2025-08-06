@@ -12,7 +12,6 @@ public class Range{
 
         public void setMin(long min){this.min = min;}
         public void setMax(long max){this.max = max;}
-
         public long getMin(){return min;}
         public long getMax(){return max;}
         public void setRep(String r){ rep = r;}

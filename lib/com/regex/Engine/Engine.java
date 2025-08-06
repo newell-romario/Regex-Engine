@@ -5,48 +5,17 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
-import automaton.State;
-import automaton.StateType;
+import automaton.BaseState;
 import parser.Parser;
 
-public class Engine{
-        private Parser parser; 
-        private State  start;
-        private State  accept;
-        private Submatch submatches;
+public abstract class Engine{
+        private Parser    parser; 
+        private BaseState start;
+        private BaseState accept;
+        private Submatch  submatches;
+        private ArrayList<Match> matches;
         private byte [] flags;
 
-        private class Submatch{
-                private int [][] matches;
-                private int [] index;
-                private int groups;
-
-                public Submatch()
-                {
-                        groups  = parser.getGroups();
-                        matches = new int[groups][2];
-                        index   = new int[groups];
-                }
-                
-                public void setMatch(int group, int pos)
-                {
-                        matches[group][index[group]] = pos;
-                        index[group] = (index[group]+1)%2; 
-                }
-
-                public Submatch copy()
-                {
-                        Submatch match = new Submatch();
-                        int [][] m = match.getMatches();
-                        for(int i = 0; i < m.length; ++i){
-                                for(int j = 0; j < m[i].length; ++j)
-                                        m[i][j] = matches[i][j];
-                        }
-                        return match;
-                }
-
-                public int [][] getMatches(){return matches;}                
-        }
 
         public Engine(String pat, byte [] f)
         {
@@ -55,121 +24,69 @@ public class Engine{
                         parser = new Parser(pat, flags);
                         start  = parser.compile(); 
                         accept = start.getAccept();
-                        submatches = new Submatch();
+                        submatches = new Submatch(parser.getGroups());
                 } catch (Exception e) {
                        System.err.println(e.getMessage());
                 }
         }
 
-        public boolean match(String text)
-        {
-                int pos = 0; 
-                Set<State> states = match(text, pos);
-                return states.contains(accept);
-        }
-
         
-        private Set<State> match(String text, int pos)
+
+        public Set<BaseState> eClosure(BaseState state)
         {
-                Set<State> cur  = epsilonClosure(start);
-                Set<State> post = new HashSet<>();
-                State [] next   = null;
-                boolean inc     = false;
-
-                while(pos < text.length()){
-                        inc = true;
-                        for(State state : cur){
-                                switch(state.getStateType()){
-                                        case NORMAL:
-                                                next = state.move(text.codePointAt(pos));
-                                        break;
-                                        case CHARACTER_CLASS:
-                                                next = state.move(text.codePointAt(pos));
-                                        break;
-                                        case SUBMATCH:
-                                                submatches.setMatch(state.getSubMatch(), pos);
-                                                next = state.move();
-                                                inc = false;
-                                        break;
-                                        case ANCHOR:
-                                                next = state.assertion(text, pos);
-                                                inc = false;
-                                        default:
-                                                break;
-                                }
-                                
-                                for(int i = 0; i < next.length; ++i){
-                                        if(next[i] != null)
-                                                post.addAll(epsilonClosure(next[i]));
-                                }
-                        }  
-                         
-                        if(inc)
-                                ++pos;
-
-                        cur  = post;
-                        post = new HashSet<>();
-                        
-                }
-
-                for(State state: cur){
-                        switch(state.getStateType()){
-                                case SUBMATCH:
-                                        submatches.setMatch(state.getSubMatch(), pos);
-                                        next = state.move();
-                                break;
-                                case ANCHOR:
-                                        next = state.assertion(text, pos);
-                                break;
-                                default:
-                        }
-                        if(next != null)
-                                for(int i = 0; i < next.length; ++i){
-                                        if(next[i] != null)
-                                                post.addAll(epsilonClosure(next[i]));
-                        }
-                }
-                cur.addAll(post);
-                return cur;
-        }
-
-        public Set<State> epsilonClosure(State state)
-        {
-                final int PROCESSING = 0; 
-                final int DONE = 1;
-                Deque<State> stack = new ArrayDeque<>();
-                Hashtable<State, Integer> onStack = new Hashtable<>();
-                State [] next = null;
+                Deque<BaseState> stack = new ArrayDeque<>();
+                Hashtable<BaseState, BaseState> onStack = new Hashtable<>();
+                BaseState [] next = null;
                 stack.push(state);
-                onStack.put(state, PROCESSING); 
+                onStack.put(state, state); 
                 boolean exit;
                 while(!stack.isEmpty()){
                         for(;;){
                                 state = stack.peek();
                                 next  = state.move();
-                                exit  = true;
-                                if(state.getStateType() == StateType.NORMAL)
-                                        for(int i = 0; i < next.length; ++i){
-                                                if(next[i] != null){
-                                                        if(!onStack.containsKey(next[i])){
-                                                                stack.push(next[i]);
-                                                                onStack.put(next[i], PROCESSING);
-                                                                exit = false;
-                                                                break;
-                                                        }
+                                exit  = true;                                
+                                for(int i = 0; i < next.length; ++i){
+                                        if(next[i] != null){
+                                                if(!onStack.containsKey(next[i])){
+                                                        stack.push(next[i]);
+                                                        onStack.put(next[i], state);
+                                                        exit = false;
+                                                        break;
                                                 }
                                         }
-                                
+                                }  
                                 if(exit)
                                         break;
                         }
                         state = stack.pop();
-                        onStack.put(state, DONE);
+                        onStack.put(state, state);
                 }
              
                 return new HashSet<>(onStack.keySet());
         }
 
-        public State getStart(){return start;}
+        protected class Configuration{
+                int pos; 
+                BaseState state;
+                Submatch  matches;
+                Configuration(int pos, BaseState state, Submatch matches)
+                {
+                        this.pos     = pos; 
+                        this.state   = state;
+                        this.matches = matches; 
+                }
+        }
 
+
+        public abstract boolean match(String text);
+        protected abstract int match(String text, int pos);
+        public abstract ArrayList<Match> allMatches(String text);
+        public BaseState getStart(){return start;}
+        public BaseState getAccept(){return accept;}
+        protected Submatch  getSubmatches(){return submatches;}
+        protected void setSubmatch(Submatch match){submatches = match;}
+        protected byte []   getFlags(){return flags;}
+        protected void setMatch(int group,  int index, int pos){submatches.setMatch(group, index, pos);}
+        protected void setMatch(ArrayList<Match> m){matches = m;}
+        public ArrayList<Match> getMatches(){return matches;}
 }

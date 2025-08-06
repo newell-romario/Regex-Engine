@@ -2,10 +2,10 @@ package lexical;
 import exceptions.*;
 
 public class Scanner{
-        private int loc; /*current location in the pattern*/
+        private int loc;/*current location in the pattern*/
         private String pattern;/*pattern*/     
         private int [] values;/*holds the values of the current token*/
-        private CharacterClass set; /*Represents a character set*/
+        private CharacterClass set;/*Represents a character set*/
         private Range range;/*Represents a range of the form a-z or {1, 5}*/
         private TokenType type;/*Stores the type of token*/
         private final static Long NEGATIVE_INFINITY = Double.doubleToLongBits(Double.NEGATIVE_INFINITY);
@@ -138,7 +138,7 @@ public class Scanner{
                                 else if(Character.isLetter(pattern.codePointAt(peek)))
                                         throw new InvalidTokenException("Invalid token: unknown escape sequence.");
                                 else{
-                                        /*You're a symbol*/
+                                        /*We are an escaped symbol which is meaningless.*/
                                         values[1] = pattern.codePointAt(peek);
                                         ++peek;
                                 }
@@ -150,7 +150,7 @@ public class Scanner{
          * Processes a back-reference.
          * 
          * @param peek Location processing should start from.
-         * @return Returns the location of the first character after the back-reference just read
+         * @return Returns the location of the first character after the back-reference just read.
          */
         private int processBackReference(int peek)
         {
@@ -180,8 +180,12 @@ public class Scanner{
                         TokenType.LEFT_PAREN, TokenType.RIGHT_PAREN, 
                         TokenType.ASSERTIONS, TokenType.COLON
                 };
-                type      = types[temp.indexOf(pattern.codePointAt(peek))];
-                values[0] = pattern.codePointAt(peek); 
+                
+                type = types[temp.indexOf(pattern.codePointAt(peek))];
+                if(type != TokenType.ASSERTIONS)
+                        values[0] = pattern.codePointAt(peek); 
+                else 
+                        values[1] = pattern.codePointAt(peek); 
                 return ++peek;
         }
 
@@ -349,6 +353,7 @@ public class Scanner{
                                 case ',':
                                         ++peek; 
                                         start = peek;
+                                        
                                         /*Reading the maximum */
                                         while(peek < pattern.length() && Character.isDigit(pattern.codePointAt(peek)))
                                                 ++peek;

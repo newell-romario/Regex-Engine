@@ -6,20 +6,20 @@ import lexical.Escape;
 import lexical.Posix;
 import misc.IntervalTree;
 
-public class StateCharClass  extends State{
+public class CharClassState  extends NormalState{
         IntervalTree members;
         ArrayList<Posix> posixes; 
         ArrayList<Escape> escapes;
         boolean negated;
         CharacterClass c;
 
-        public StateCharClass(CharacterClass c)
+        public CharClassState(CharacterClass c)
         {
                 c.compactSet();
                 int [] vals = new int[c.getSet().size()];
                 for(int i = 0; i < vals.length;++i)
                         vals[i] = c.getSet().get(i);
-                super(StateType.CHARACTER_CLASS, vals);
+                super(vals);
                
                 members = new IntervalTree(c.getRanges());
                 posixes = c.getPosix();
@@ -29,7 +29,10 @@ public class StateCharClass  extends State{
         }
 
         @Override
-        public State [] move(int val)
+        public BaseState [] move(){return super.getDeadState();}
+
+        @Override
+        public BaseState[] move(int val)
         {
                 boolean e = false;
                 boolean p = false;
@@ -69,9 +72,10 @@ public class StateCharClass  extends State{
         }
 
         @Override
-        public State copy()
+        public CharClassState copy()
         {
-                State s = new StateCharClass(c);
+                CharClassState s = new CharClassState(c);
+                s.setBase(this);
                 return s;  
         }
 

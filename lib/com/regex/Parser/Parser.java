@@ -1,6 +1,10 @@
 package parser;
-import automaton.State;
+import java.util.ArrayList;
+
+import automaton.BackReferenceState;
+import automaton.BaseState;
 import automaton.StateFactory;
+import automaton.StateType;
 import exceptions.InvalidTokenException;
 import lexical.*;
 
@@ -10,21 +14,23 @@ public class Parser{
         private int     groups;
         private String  pattern; 
         private byte [] flags;
-
+        private ArrayList<BackReferenceState> references = new ArrayList<>();
+        
         public Parser(String pat, byte [] flags)
         {
                 this.flags = flags;
                 groups  = 1;
                 pattern = pat;
                 scanner = new Scanner(pat);
+                
         }
 
-        public State compile() throws InvalidTokenException
+        public BaseState compile() throws InvalidTokenException
         {
-                State start = regex(flags);
-                State submatch = StateFactory.subMatch(0);
-                StateFactory.join(start, submatch);
-                submatch = StateFactory.subMatch(0);; 
+                BaseState start = regex(flags);
+                BaseState submatch = StateFactory.subMatch(0, StateType.SUBMATCH_END, 1);
+                start = StateFactory.join(start, submatch);
+                submatch = StateFactory.subMatch(0, StateType.SUBMATCH_START, 0); 
                 submatch = StateFactory.join(submatch, start);
                 token = scanner.nextToken(); 
                 if(token.getTokenType() != TokenType.EOF)
@@ -32,28 +38,28 @@ public class Parser{
                 return submatch; 
         }
 
-        private State regex(byte [] flags) throws InvalidTokenException
+        private BaseState regex(byte [] flags) throws InvalidTokenException
         {
-                State start = union(flags);
+                BaseState start = union(flags);
                 return start;
         }
 
-        private State union(byte [] flags) throws InvalidTokenException
+        private BaseState union(byte [] flags) throws InvalidTokenException
         {
-                State a = concatenation(flags);
+                BaseState a = concatenation(flags);
                 token = scanner.peek();
                 if(token.getTokenType() == TokenType.ALTERNATION){
                         token = scanner.nextToken();
-                        State b = regex(flags);
-                        a = StateFactory.or(a, b, flags);
+                        BaseState b = regex(flags);
+                        a = StateFactory.or(a, b);
                 }
                 return a;
         }
 
-        private State concatenation(byte [] flags) throws InvalidTokenException
+        private BaseState concatenation(byte [] flags) throws InvalidTokenException
         {
-                State a = basicRegex(flags);
-                State b = null;
+                BaseState a = basicRegex(flags);
+                BaseState b = null;
                 token = scanner.peek();
                 switch(token.getTokenType()){
                         case CHARACTER:
@@ -72,26 +78,26 @@ public class Parser{
                 return a;
         }
 
-        private State basicRegex(byte [] flags) throws InvalidTokenException
+        private BaseState basicRegex(byte [] flags) throws InvalidTokenException
         {
-                State state = atom(flags);
+                BaseState state = atom(flags);
                 state = quantifiers(state);
                 return state;
         }
         
-        private State atom(byte [] flags) throws InvalidTokenException
+        private BaseState atom(byte [] flags) throws InvalidTokenException
         {       
-                State start      = null;
+                BaseState start  = null;
                 CharacterClass c = null;
                 token = scanner.nextToken();
                 switch(token.getTokenType()){
                         case ASSERTIONS:
-                               start = StateFactory.assertion(Assertion.getType(token.getValue()), flags);
+                               start = StateFactory.assertion(Assertion.getType(token.getValue()));
                         break;
                         case BACK_REFERENCE:
                                 if(token.getValue() > groups || token.getValue() == 0)
                                         throw new InvalidTokenException("Invalid token: invalid back reference.");
-                                start = StateFactory.backReference(token.getValue(), flags);
+                                start = references.get(token.getValue()-1);
                         break;
                         case CHARACTER:
                         case COLON:
@@ -114,7 +120,7 @@ public class Parser{
                 return start;
         }
 
-        private State quantifiers(State state)
+        private BaseState quantifiers(BaseState state)
         {
                 TokenType type;
                 boolean greedy = true;
@@ -156,16 +162,13 @@ public class Parser{
                 return state;  
         }
 
-        private State group(byte [] flags) throws InvalidTokenException
+        private BaseState group(byte [] flags) throws InvalidTokenException
         {
-                State start  = null;
+                BaseState start  = null;
                 boolean exit = true;
                 String f = "";
-                State submatch = null;
-            
-                /*TO DO
-                 * Take care of  sub group and flags
-                 */
+                BaseState submatch = null;
+
                 token = scanner.peek();
                 if(token.getTokenType() == TokenType.QUESTION_MARK){
                         token = scanner.nextToken();
@@ -184,20 +187,23 @@ public class Parser{
                                                         exit = false;
                                         }
                                 }
-                                if("isU".indexOf(token.getValue()) == -1
+                                if("isU".indexOf(token.getValue()) == -1 && f.length() > 3 
                                 && token.getTokenType() != TokenType.COLON 
                                 && token.getTokenType() != TokenType.RIGHT_PAREN)
                                         throw new InvalidTokenException("Invalid token: unknown flag.");
-                                
+                                byte [] g = new byte[flags.length];
+                                g[0] = (f.contains("i") == true? 1: flags[0]);
+                                g[1] = (f.contains("s") == true? 1: flags[1]);
+                                g[2] = (f.contains("U") == true? 1: flags[2]);
                                 if(token.getTokenType() == TokenType.COLON){
-                                        /*Turn off non capturing*/
-                                        start = regex(f.getBytes());
+                                        /*Turn off sub matching*/
+                                        start = regex(g);
                                         start.setRegex("(?" + f + ":" + start.getRegex() + ")");
                                         token = scanner.nextToken();
                                         if(token.getTokenType() != TokenType.RIGHT_PAREN)
                                                 throw new InvalidTokenException("Invalid token: missing ).");
                                 }else if(token.getTokenType() == TokenType.RIGHT_PAREN){
-                                        start = regex(f.getBytes());
+                                        start = regex(g);
                                         start.setRegex("(?" + f + ")" + start.getRegex());
                                 }else 
                                         throw new InvalidTokenException("Invalid token: unknown flag.");
@@ -209,13 +215,12 @@ public class Parser{
                                 token = scanner.nextToken();
                                 if(token.getTokenType() != TokenType.RIGHT_PAREN)
                                         throw new InvalidTokenException("Invalid token: missing ).");
-                                
                         }else throw new InvalidTokenException("Invalid token: unknown flag.");
                 }else{
                         int pos =  groups++;
                         /*Creating submatch start*/
-                        
-                        submatch = StateFactory.subMatch(pos);
+                        references.add(StateFactory.backReference(null, null, pos));
+                        submatch = StateFactory.subMatch(pos, StateType.SUBMATCH_START, 0);
                         submatch.setRegex("(");
                         start = regex(flags);
                         token = scanner.nextToken();
@@ -224,10 +229,13 @@ public class Parser{
                                 
                         start = StateFactory.join(submatch, start);
                         /*Create submatch ending*/
-                        submatch = StateFactory.subMatch(pos);
+                        submatch = StateFactory.subMatch(pos, StateType.SUBMATCH_END, 1);
                         submatch.setRegex(")");
+                        submatch.setStateType(StateType.SUBMATCH_END);
                         start = StateFactory.join(start, submatch);
-                        
+                        BackReferenceState ref = references.get(pos-1);
+                        ref.setStart(start);
+                        ref.setEnd(start.getAccept());
                 }
                 return start;
         }

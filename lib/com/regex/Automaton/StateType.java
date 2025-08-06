@@ -1,8 +1,13 @@
 package automaton;
 public enum StateType {
+        BASE,
         NORMAL,
         ANCHOR,
         BACK_REFERENCE,
-        CHARACTER_CLASS,
-        SUBMATCH
+        SUBMATCH_START,
+        SUBMATCH_END,
+        STAR,
+        QUESTION, 
+        ALTERNATION,
+        RANGE
 }

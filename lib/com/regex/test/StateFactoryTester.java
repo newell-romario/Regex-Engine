@@ -1,11 +1,12 @@
-package parser;
+package test;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import org.junit.Test;
-import automaton.State;
+import automaton.BaseState;
 import automaton.StateFactory;
+import lexical.CharacterClass;
 import lexical.Range;
 
 
@@ -19,11 +20,11 @@ public class StateFactoryTester
         public void testStar()
         {
                 int [] vals   = {109}; 
-                State start   = StateFactory.normal(vals, null);
-                State old     = start.getAccept();
-                State star    = StateFactory.star(start, true);
-                State accept  = star.getAccept();
-                State [] next = star.getStates();
+                BaseState start   = StateFactory.normal(vals, null);
+                BaseState old     = start.getAccept();
+                BaseState star    = StateFactory.star(start, true);
+                BaseState accept  = star.getAccept();
+                BaseState [] next = star.getStates();
                 assertEquals(next[0], start);
                 assertEquals(next[1], accept);
                 next = old.getStates();
@@ -36,30 +37,29 @@ public class StateFactoryTester
         @Test
         public void testPlus()
         {
-                int [] vals   = {109}; 
-                State start   = StateFactory.normal(vals, null);
-                State old     = start.getAccept();
-                State plus    = StateFactory.plus(start, true);
-                State accept  = plus.getAccept();
-                State [] next = accept.getStates();
+                int [] vals       = {109}; 
+                BaseState start   = StateFactory.normal(vals, null);
+                BaseState old     = start.getAccept();
+                BaseState plus    = StateFactory.plus(start, true);
+                BaseState accept  = plus.getAccept();
+                BaseState [] next = accept.getStates();
                 assertEquals(start.getVals(), vals);
                 assertNull(next[0]);
                 assertNull(next[1]);
                 next = old.getStates();
-                assertEquals(next[0], start);
+                next = next[0].getStates();
+                assertEquals(next[0].getCid(), start.getKey());
                 assertEquals(next[1], accept);
-                next = start.getStates();
-                assertEquals(next[0], old);
         }
 
         @Test
         public void testQuestion()
         {
                 int [] vals   = {109}; 
-                State start   = StateFactory.normal(vals, null);
-                State quest   = StateFactory.question(start, true);
-                State accept  = quest.getAccept();
-                State [] next = accept.getStates();
+                BaseState start   = StateFactory.normal(vals, null);
+                BaseState quest   = StateFactory.question(start, true);
+                BaseState accept  = quest.getAccept();
+                BaseState [] next = accept.getStates();
                 assertNull(next[0]);
                 assertNull(next[1]);
                 next  = quest.getStates();
@@ -74,11 +74,11 @@ public class StateFactoryTester
         public void testOr()
         {
                 int [][] vals   = {{109}, {50}}; 
-                State a = StateFactory.normal(vals[0], null); 
-                State b = StateFactory.normal(vals[1], null);
-                State or = StateFactory.or(a, b, null);
+                BaseState a = StateFactory.normal(vals[0], null); 
+                BaseState b = StateFactory.normal(vals[1], null);
+                BaseState or = StateFactory.or(a, b);
                 assertNull(or.getVals());
-                State [] next = or.getStates();
+                BaseState [] next = or.getStates();
                 assertEquals(next[0], a);
                 assertEquals(next[1], b);
                 assertArrayEquals(next[0].getVals(), vals[0]);
@@ -92,12 +92,10 @@ public class StateFactoryTester
         public void testDuplicate()
         {
                 int [] vals   = {109}; 
-                State start   = StateFactory.normal(vals, null);
-                State dup = StateFactory.duplicate(start);
+                BaseState start   = StateFactory.normal(vals, null);
+                BaseState dup = StateFactory.duplicate(start);
                 assertEquals(start.getStateType(), dup.getStateType());
                 assertEquals(start.getRegex(), dup.getRegex());
-                assertEquals(start.getAssertion() , dup.getAssertion());
-                assertEquals(start.getSubMatch(), dup.getSubMatch());
                 assertArrayEquals(start.getVals(), dup.getVals());
                 assertArrayEquals(start.getFlags(), dup.getFlags());
                 assertEquals(start.getKey(), dup.getCid());
@@ -107,25 +105,41 @@ public class StateFactoryTester
         }
 
         @Test
+        public void testDuplicateCharClass()
+        {
+                int [] vals   = {109}; 
+                CharacterClass c = new CharacterClass();
+                c.addMembers(vals[0]);
+                BaseState start = StateFactory.charClass(c, null);
+                BaseState dup   = StateFactory.duplicate(start);
+                assertEquals(start.getStateType(), dup.getStateType());
+                assertEquals(start.getRegex(), dup.getRegex());
+                assertArrayEquals(start.getVals(), dup.getVals());
+                assertArrayEquals(start.getFlags(), dup.getFlags());
+                assertEquals(start.getKey(), dup.getCid());
+                assertEquals(start.getAccept().getKey(), dup.getAccept().getCid());
+                assertNotEquals(start.getKey(), dup.getKey());
+                assertNotEquals(start.getAccept().getKey(), dup.getAccept().getKey()); 
+        }
+
+        @Test
         public void testDuplicateStar()
         {
                 int [] vals   = {109}; 
-                State start   = StateFactory.normal(vals, null);
-                State star    = StateFactory.star(start, true);
-                State dup     = StateFactory.duplicate(star);
+                BaseState start   = StateFactory.normal(vals, null);
+                BaseState star    = StateFactory.star(start, true);
+                BaseState dup     = StateFactory.duplicate(star);
                 assertEquals(star.getStateType(), dup.getStateType());
                 assertEquals(star.getRegex(), dup.getRegex());
-                assertEquals(star.getAssertion() , dup.getAssertion());
                 assertNull(dup.getVals());
                 assertNull(star.getVals());
-                assertEquals(star.getSubMatch(), dup.getSubMatch());
                 assertArrayEquals(star.getFlags(), dup.getFlags());
                 
                 
                 assertEquals(star.getKey(), dup.getCid());
                 assertEquals(star.getAccept().getKey(), dup.getAccept().getCid());
-                State [] next  = star.getStates();
-                State [] dnext = dup.getStates(); 
+                BaseState [] next  = star.getStates();
+                BaseState [] dnext = dup.getStates(); 
                 assertEquals(next[0].getKey(), start.getKey());
                 assertEquals(next[0].getKey(), dnext[0].getCid());
                 assertEquals(next[1].getKey(), dnext[1].getCid());
@@ -136,7 +150,7 @@ public class StateFactoryTester
                 assertArrayEquals(next[0].getVals(), dnext[0].getVals());
                 assertEquals(next[0].getKey(), dnext[0].getCid());
                 assertEquals(next[1], dnext[1]);
-                State accept  = start.getAccept();
+                BaseState accept  = start.getAccept();
                 assertEquals(accept.getKey(), dnext[0].getCid());
 
                 dnext = dnext[0].getStates();
@@ -149,29 +163,31 @@ public class StateFactoryTester
         public void testDuplicatePlus()
         {
                 int [] vals   = {109}; 
-                State start   = StateFactory.normal(vals, null);
-                State plus    = StateFactory.plus(start, true);
-                State dup     = StateFactory.duplicate(plus);
+                BaseState start   = StateFactory.normal(vals, null);
+                BaseState plus    = StateFactory.plus(start, true);
+                BaseState dup     = StateFactory.duplicate(plus);
+                
                 assertEquals(plus.getStateType(), dup.getStateType());
                 assertEquals(plus.getRegex(), dup.getRegex());
-                assertEquals(plus.getAssertion() , dup.getAssertion());
-                assertEquals(plus.getSubMatch(), dup.getSubMatch());
                 assertArrayEquals(plus.getFlags(), dup.getFlags());
                 assertArrayEquals(plus.getVals(), dup.getVals());
-                
                 assertEquals(plus.getKey(), dup.getCid());
                 assertEquals(plus.getAccept().getKey(), dup.getAccept().getCid());
-                State [] next  = plus.getStates(); 
-                State [] dnext = dup.getStates();
-                
+
+
+                BaseState [] next  = plus.getStates(); 
+                BaseState [] dnext = dup.getStates();
                 assertEquals(next[0].getKey(), dnext[0].getCid());
                 assertNull(next[0].getVals());
                 assertNull(dnext[0].getVals());
                 assertNull(next[1]);
                 assertNull(dnext[1]);
+
                 next  = next[0].getStates();
                 dnext = dnext[0].getStates();
-                assertEquals(next[0].getKey(), start.getKey());
+                next  = next[0].getStates();
+                dnext = dnext[0].getStates();
+                assertEquals(next[0].getCid(), start.getKey());
                 assertEquals(start.getKey(), dnext[0].getCid());
                 assertEquals(next[1].getKey(), dnext[1].getCid());
                 assertEquals(dnext[1].getCid(), plus.getAccept().getKey());
@@ -181,20 +197,18 @@ public class StateFactoryTester
         public void testDuplicateQuestion()
         {
                 int [] vals   = {109}; 
-                State start   = StateFactory.normal(vals, null);
-                State quest   = StateFactory.question(start, true);
-                State dup     = StateFactory.duplicate(quest);
+                BaseState start   = StateFactory.normal(vals, null);
+                BaseState quest   = StateFactory.question(start, true);
+                BaseState dup     = StateFactory.duplicate(quest);
                 assertEquals(quest.getStateType(), dup.getStateType());
                 assertEquals(quest.getRegex(), dup.getRegex());
-                assertEquals(quest.getAssertion() , dup.getAssertion());
-                assertEquals(quest.getSubMatch(), dup.getSubMatch());
                 assertArrayEquals(quest.getFlags(), dup.getFlags());
                 assertEquals(quest.getVals(), dup.getVals());
 
                 assertEquals(quest.getKey(), dup.getCid());
                 assertEquals(quest.getAccept().getKey(), dup.getAccept().getCid());
-                State [] next = quest.getStates();
-                State [] dnext = dup.getStates();
+                BaseState [] next = quest.getStates();
+                BaseState [] dnext = dup.getStates();
                 assertEquals(start.getKey(), next[0].getKey());
                 assertEquals(next[0].getKey(), dnext[0].getCid());
                 assertEquals(next[1].getKey(), dnext[1].getCid());
@@ -214,21 +228,19 @@ public class StateFactoryTester
         public void testDuplicateOr()
         {
                 int [][] vals   = {{109}, {50}}; 
-                State a = StateFactory.normal(vals[0], null); 
-                State b = StateFactory.normal(vals[1], null);
-                State or = StateFactory.or(a, b, null);
-                State dup = StateFactory.duplicate(or);
+                BaseState a = StateFactory.normal(vals[0], null); 
+                BaseState b = StateFactory.normal(vals[1], null);
+                BaseState or = StateFactory.or(a, b);
+                BaseState dup = StateFactory.duplicate(or);
                 assertEquals(or.getStateType(), dup.getStateType());
                 assertEquals(or.getRegex(), dup.getRegex());
-                assertEquals(or.getAssertion() , dup.getAssertion());
-                assertEquals(or.getSubMatch(), dup.getSubMatch());
                 assertArrayEquals(or.getFlags(), dup.getFlags());
                 assertEquals(or.getVals(), dup.getVals());
 
                 assertEquals(or.getKey(), dup.getCid());
                 assertEquals(or.getAccept().getKey(), dup.getAccept().getCid());
-                State [] next = or.getStates(); 
-                State [] dnext = dup.getStates();
+                BaseState [] next = or.getStates(); 
+                BaseState [] dnext = dup.getStates();
                 assertEquals(next[0].getKey(), a.getKey());
                 assertEquals(next[1].getKey(), b.getKey());
                 assertEquals(next[0].getKey(), dnext[0].getCid());
@@ -250,12 +262,12 @@ public class StateFactoryTester
         public void testJoin()
         {
                 int [][] vals   = {{109}, {97}}; 
-                State a = StateFactory.normal(vals[0], null);
-                State b = StateFactory.normal(vals[1], null);
-                State accept  = a.getAccept();
+                BaseState a = StateFactory.normal(vals[0], null);
+                BaseState b = StateFactory.normal(vals[1], null);
+                BaseState accept  = a.getAccept();
                 a = StateFactory.join(a, b);
                 assertEquals(a.getAccept(), b.getAccept());
-                State [] next = accept.getStates();
+                BaseState [] next = accept.getStates();
                 assertEquals(next[0], b);
                 assertArrayEquals(vals[0], a.getVals());
                 assertArrayEquals(vals[1], b.getVals());
@@ -265,14 +277,14 @@ public class StateFactoryTester
         public void testJoinStates()
         {
                 int [][] vals = {{109}, {100}, {80}};
-                State [] states = new State[vals.length];
+                BaseState [] states = new BaseState[vals.length];
                 for(int i = 0; i < vals.length;++i)
                         states[i] = StateFactory.normal(vals[i], null);
-                State accept = states[0].getAccept();
-                State start  = StateFactory.join(states);
+                BaseState accept = states[0].getAccept();
+                BaseState start  = StateFactory.join(states);
                 assertEquals(start, states[0]);
                 assertEquals(start.getAccept(), states[vals.length-1].getAccept());
-                State [] next = accept.getStates();
+                BaseState [] next = accept.getStates();
                 int count = 1;
                 while (next[0] != null){
                         if(count < states.length && next[0] == states[count])
@@ -296,16 +308,16 @@ public class StateFactoryTester
                 long max = 5;
                 Range range;
                 int [] vals = {109};
-                State accept;
+                BaseState accept;
                 
                 /*
                  * {5}
                  */
                 range = new Range(max, max);
-                State start = StateFactory.normal(vals, null);
+                BaseState start = StateFactory.normal(vals, null);
                 accept = start.getAccept();
-                State quant = StateFactory.range(start, range, true);
-                State [] next = accept.getStates();
+                BaseState quant = StateFactory.range(start, range, true);
+                BaseState [] next = accept.getStates();
                 assertEquals(start, quant);
                 accept = quant.getAccept();
                 int count = 0;

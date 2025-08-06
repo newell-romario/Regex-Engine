@@ -1,8 +1,13 @@
-package lexical;
+package test;
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import exceptions.*;
+import lexical.Escape;
+import lexical.Posix;
+import lexical.Scanner;
+import lexical.Token;
+import lexical.TokenType;
 
 public class ScannerTest {
 
