@@ -26,7 +26,7 @@ public abstract class Engine{
                         accept = start.getAccept();
                         submatches = new Submatch(parser.getGroups());
                         matches = new ArrayList<>();
-                } catch (Exception e) {
+                } catch(Exception e){
                        System.err.println(e.getMessage());
                 }
         }
@@ -68,16 +68,17 @@ public abstract class Engine{
 
         protected class Configuration{
                 int pos; 
+                int pv;
                 BaseState state;
                 Submatch  matches;
-                Configuration(int pos, BaseState state, Submatch matches)
+                Configuration(int pos, BaseState state, Submatch matches, int pv)
                 {
                         this.pos     = pos; 
                         this.state   = state;
                         this.matches = matches; 
+                        this.pv      = pv;
                 }
         }
-
 
         public abstract boolean match(String text);
         protected abstract int match(String text, int pos);
@@ -88,6 +89,7 @@ public abstract class Engine{
         protected void setSubmatch(Submatch match){submatches = match;}
         protected byte []   getFlags(){return flags;}
         protected void setMatch(int group,  int index, int pos){submatches.setMatch(group, index, pos);}
+        protected void setMatch(int group, int indeex, int pos, Submatch match){match.setMatch(group, indeex, pos);}
         protected void setMatch(ArrayList<String> matches){this.matches = matches;}
         protected ArrayList<String> getMatches(){return matches;}
         protected void storeMatches(String text)

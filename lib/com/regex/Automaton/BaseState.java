@@ -24,6 +24,7 @@ public class BaseState {
 
         /*Dead State*/
         private static final BaseState [] dead = new NormalState[2];
+        
 
         /*We can set flags for regex such as:
          * i - case-insensitive

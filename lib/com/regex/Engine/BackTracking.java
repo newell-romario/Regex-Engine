@@ -1,5 +1,4 @@
 package Engine;
-
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import automaton.BackReferenceState;
@@ -15,9 +14,9 @@ public class BackTracking extends Engine{
 
         @Override
         public boolean match(String text)
-        {                
+        {  
                 ArrayList<String> matches = new ArrayList<>();
-                super.setMatch(matches);
+                super.setMatch(matches);              
                 ArrayDeque<Configuration>stack = new ArrayDeque<>();
                 BaseState cur     = super.getStart();
                 BaseState accept  = super.getAccept();
@@ -51,7 +50,7 @@ public class BackTracking extends Engine{
                                 case ALTERNATION:
                                 case QUESTION:
                                         next   = cur.move();
-                                        config = new Configuration(pos, next[1], getSubmatches().copy());
+                                        config = new Configuration(pos, next[1], getSubmatches().copy(), 0);
                                         stack.push(config);
                                 break;
                                 case BACK_REFERENCE:
@@ -125,7 +124,7 @@ public class BackTracking extends Engine{
                                 case ALTERNATION:
                                 case QUESTION:
                                         next   = cur.move();
-                                        config = new Configuration(pos, next[1], getSubmatches().copy());
+                                        config = new Configuration(pos, next[1], getSubmatches().copy(), 0);
                                         stack.push(config);
                                 break;
                                 case BACK_REFERENCE:
@@ -145,7 +144,7 @@ public class BackTracking extends Engine{
                         
                         if(cur == accept)
                                 break;
-                        if(next != dead)
+                        else if(next != dead)
                                 cur = next[0]; 
                         else{
                                 if(!stack.isEmpty()){
@@ -155,8 +154,6 @@ public class BackTracking extends Engine{
                                         setSubmatch(config.matches);
                                 }else cur = null;
                         }
-                        if(cur == accept && pos == text.length())
-                                break;
                 }while(cur != null);
 
                 
