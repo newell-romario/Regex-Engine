@@ -25,7 +25,12 @@ public class Driver {
                         ArrayList<Match> matches = regex.matchAll(text);
                         for(Match m: matches){
                                 System.out.println(m.getMatch());
+                                System.out.println("----------Groups---------");
+                                for(int i = 1; i < m.getGroups().size(); ++i){
+                                        System.out.println("Group "+ i+ ": "+ m.getGroups().get(i));
+                                }
                         }
+
 
                 }catch(Exception e){}
                
