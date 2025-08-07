@@ -6,3 +6,6 @@ We don't support look-around assertions. Why? Since this is only a simple implem
 Additionally, we support submatching extraction. 
 
 See the driver class for a demo of how to use.
+
+Lastly, one can use https://regex101.com/ and compare the results from that site versus the results of our engine. In most cases it should be consistent with the Java flavour regex or Re2 flavour of regex results.
+
