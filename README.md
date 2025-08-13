@@ -84,6 +84,29 @@ Additionally, we can get the submatches by calling the getMatches function which
 
 # Features 
 This regex engine supports repetition, alternation, ascii character classes, character classes and backreferences. The above code snipet is indicative of the syntax accepted by our regex engine.
+
+*Subset of PCRE Syntax Supported: Implements a core subset of Perl Compatible Regular Expressions, including most commonly used constructs.
+
+*Literal Matching: Supports matching literal characters including escaped special characters (e.g., \. matches a literal dot).
+
+*Character Classes and POSIX Classes: Supports standard character classes like \d, \w, \s and POSIX classes such as [[:alpha:]], [[:digit:]].
+
+*Quantifiers: Full support for greedy quantifiers (*, +, ?, {n,m}) and their lazy counterparts (*?, +?, ??).
+
+*Grouping and Alternation: Supports capturing groups (), non-capturing groups (?:...), and alternation with the pipe symbol |.
+
+*Backreferences: Allows backreferencing to captured groups within the pattern (e.g., \1, \2).
+
+*Anchors: Supports start (^) and end ($) of string or line anchors.
+
+*No Lookaround Assertions: Does not support positive or negative lookahead ((?=...), (?!...)) or lookbehind ((?<=...), (?<!...)) assertions, reducing complexity and improving matching efficiency.
+
+*ASCII-Based Matching: Operates on ASCII character sets; Unicode and multibyte character support are not implemented.
+
+*Escaped Special Sequences: Supports common PCRE escape sequences like \t, \n, \r, and hex codes (e.g., \x41).
+
+*Efficient Engine Design: Optimized for straightforward regex patterns without advanced features like lookarounds, enabling faster execution and simpler implementation.
+
 # Pitfalls
 
 This is a backtracking implementation which means it's susceptible to catastrophic backtracking. We didn't take any precautions to prevent this. Additionally we didn't implement a full regex engine we  chose to leave out look-around assertions similar to how RE2 engine leaves them out. Our reason for leaving them out is not performance based but because this is only a portfolio project I didn't want it to get to complex. Adding look-assertions is future plan. We don't support Unicode. We only support ASCII. 
