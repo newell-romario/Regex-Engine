@@ -2,7 +2,7 @@ import java.util.ArrayList;
 import Engine.*;
 
 public class Regex {
-        Engine backTracking;
+        private Engine backTracking;
 
         public Regex(String pattern) throws Exception
         {
@@ -22,14 +22,19 @@ public class Regex {
         }
 
 
-        public Match match(String text)
+        public boolean match(String text)
         {
-                backTracking.match(text);
-                return backTracking.getMatches().get(0);
+                return backTracking.match(text);
         }
 
         public ArrayList<Match> matchAll(String text)
         {
                 return backTracking.allMatches(text);
         }
+
+        public ArrayList<Match> getMatches()
+        {
+                return backTracking.getMatches();
+        }
+        
 }
