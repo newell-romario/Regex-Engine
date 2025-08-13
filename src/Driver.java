@@ -1,38 +1,56 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
-
 import Engine.Match;
 
 public class Driver {
         public static void main(String [] args)
         {
-                String text = ""; 
-                Path file = Path.of("text.txt");
-                try(BufferedReader reader = Files.newBufferedReader(file, Charset.forName("UTF-8"))){
-                        String line = null; 
-                        while((line = reader.readLine()) != null)
-                                text+= line+"\n"; /*adding the newline character*/
-                }catch(IOException e){System.err.println(e.getMessage());}
-                
-                try{    
-                        System.out.println("");
-                        System.out.println("--------------------------------Matches---------------------------------------");
-                        Regex regex = new Regex("^[A-Z][a-z]{2,5}\\d{3}[a-zA-Z]{2}(?:[#@$%^&*][a-z0-9]{1,4})?$");
-                        ArrayList<Match> matches = regex.matchAll(text);
-                        for(Match m: matches){
-                                System.out.println(m.getMatch());
-                                System.out.println("----------Groups---------");
-                                for(int i = 1; i < m.getGroups().size(); ++i){
-                                        System.out.println("Group "+ i+ ": "+ m.getGroups().get(i));
+                String pattern = "<([A-Za-z][A-Za-z0-9]*)\\b[^>]*>(.*?)<\\/\\1>";
+                String text = "<span class=\"x\">Text</span>";
+
+                try{
+                        System.out.println("----------------------------------------------");
+                        Regex regex = new Regex(pattern);
+                        System.out.println(regex.match(text));
+                        ArrayList<Match> matches = regex.getMatches();
+                        ArrayList<String> groups = null;
+                        int i = 0;
+                        for(Match match: matches){
+                                System.out.println("Match " + ++i + ":" + match.getMatch());
+                                groups = match.getGroups();
+                                for(int j = 0; j < groups.size(); ++j){
+                                        System.out.println("Submatch" + (j+1) + ":" + groups.get(j));
+                                }
+                        }
+                        System.out.println("----------------------------------------------");
+                        pattern = "\\b([A-Za-z]+)\\b(?:\\s+\\b[A-Za-z]+\\b){0,3}\\s+\\1\\b";
+                        regex   = new Regex(pattern);
+                        text    = "hello hello\nhello there world hello\ntest one two three test\ndog runs fast dog\nready rooster";
+                        matches = regex.matchAll(text);
+                        i = 0;
+                        for(Match match: matches){
+                                System.out.println("Match " + ++i + ":" + match.getMatch());
+                                groups = match.getGroups();
+                                for(int j = 0; j < groups.size(); ++j){
+                                        System.out.println("Submatch" + (j+1) + ":" + groups.get(j));
+                                }
+                        }
+                        System.out.println("----------------------------------------------");
+                        pattern = "^(?:[A-Za-z0-9]+([-_.][A-Za-z0-9]+)*@[A-Za-z0-9]+(?:[-][A-Za-z0-9]+)*\\.[A-Za-z]{2,6})$";
+                        text = "john.doe@example.com\nalice_bob-123@sub-domain.example\nuser123@domain.co\n@b.io";
+                        regex   = new Regex(pattern);
+                        matches = regex.matchAll(text);
+                        i = 0;
+                        for(Match match: matches){
+                                System.out.println("Match " + ++i + ":" + match.getMatch());
+                                groups = match.getGroups();
+                                for(int j = 0; j < groups.size(); ++j){
+                                        System.out.println("Submatch" + (j+1) + ":" + groups.get(j));
                                 }
                         }
 
-
-                }catch(Exception e){}
-               
+                } catch (Exception e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                }
         }
 }

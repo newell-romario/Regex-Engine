@@ -102,10 +102,10 @@ public class BackTracking extends Engine{
                 Configuration config = null;
                 BaseState [] dead = cur.getDeadState();
                 do{
+                        
                         switch(cur.getStateType()){
                                 case NORMAL:
                                         if(pos < text.length()){
-                                                
                                                 next = cur.move(text.codePointAt(pos));
                                                 if(next != dead)
                                                         ++pos;
@@ -159,6 +159,7 @@ public class BackTracking extends Engine{
                                 }else cur = null;
                         }
                 }while(cur != null);
+
 
                 
                 if(cur == accept)

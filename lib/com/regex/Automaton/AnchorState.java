@@ -23,7 +23,7 @@ public class AnchorState extends BaseState{
                                         return super.getStates();  
                                 return super.getDeadState();
                         case END_OF_LINE:
-                                if(pos == text.length())
+                                if(pos >= text.length())
                                         return super.getStates();
                                 if(text.charAt(pos) == '\n' || text.charAt(pos) == '\r')
                                         return super.getStates();
@@ -33,13 +33,13 @@ public class AnchorState extends BaseState{
                                         return super.getStates();
                                 if(pos+1 == text.length() && Posix.asciiIsWord(text.charAt(pos)))
                                         return super.getStates();
-                                if(!Posix.asciiIsWord(text.charAt(pos)))
+                                if(pos < text.length() && !Posix.asciiIsWord(text.charAt(pos)))
                                         if(pos+1 < text.length() &&
                                          Posix.asciiIsWord(text.charAt(pos+1)))
                                                 return super.getStates();
-                                if(Posix.asciiIsWord(text.charAt(pos)))
+                                if(pos < text.length() && Posix.asciiIsWord(text.charAt(pos)))
                                         if(pos+1 < text.length() &&
-                                                !Posix.asciiIsWord(text.charAt(pos+1)))
+                                                !Posix.asciiIsWord(text.charAt(pos-1)))
                                                 return super.getStates();
                                 return super.getDeadState();
                         case NON_WORD_BOUNDARY:
@@ -47,13 +47,13 @@ public class AnchorState extends BaseState{
                                         return super.getStates();
                                 if(!(pos+1 == text.length() && Posix.asciiIsWord(text.charAt(pos))))
                                         return super.getStates();
-                                if(Posix.asciiIsWord(text.charAt(pos)))
+                                if(pos < text.length()  && Posix.asciiIsWord(text.charAt(pos)))
                                         if(!(pos+1 < text.length() &&
                                          Posix.asciiIsWord(text.charAt(pos+1))))
                                                 return super.getStates();
-                                if(!Posix.asciiIsWord(text.charAt(pos)))
+                                if(pos < text.length()  && !Posix.asciiIsWord(text.charAt(pos)))
                                         if(!(pos+1 < text.length() &&
-                                                !Posix.asciiIsWord(text.charAt(pos+1))))
+                                                !Posix.asciiIsWord(text.charAt(pos-1))))
                                                 return super.getStates();
                         return super.getDeadState();
                         case START_OF_FILE:
